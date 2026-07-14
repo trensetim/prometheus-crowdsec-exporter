@@ -48,6 +48,7 @@ class CrowdSecCollector(Collector):
         yield metrics.createExporterInfo()
 
         yield from self._collectDecisions()
+        yield from self._collectAlerts()
         yield self._pollErrorsTotal
 
     def _collectDecisions(self) -> Iterable[Metric]:
@@ -117,6 +118,127 @@ class CrowdSecCollector(Collector):
                 value=d.value
             )
         return aggregated
+
+
+    def _collectAlerts(self) -> Iterable[Metric]:
+        alertsPollErrorsCounter = 0
+        # create new metrics
+        # cant use existing metrics cause it would append the new data
+        activeAlerts = metrics.createActiveAlerts()
+        alertsFetchedTotal = metrics.createAlertsFetchedTotal()
+        lastSuccessfulAlertsPollTimestamp = metrics.createLastSuccessfulAlertsPollTimestamp()
+        alertsPollErrorsTotal = metrics.createAlertsPollErrorsTotal()
+
+        # fetch decisions from LAPI
+        endpoint = "alerts"
+        t = time.monotonic()
+
+        try:
+            raw = self._fetch(endpoint, _ALERTS_PATH)
+        except requests.exceptions.ConnectionError:
+            self._pollErrorsTotal.add_metric([endpoint, "connectionError"], 1)
+            return
+
+        if raw is None:
+            return
+
+        # parse data
+        alerts, skipped = parseAlerts(raw)
+
+        # check for parse errors and in case of errors send metric
+        if skipped:
+            alertsPollErrorsCounter = skipped
+            alertsPollErrorsTotal.add_metric([endpoint, "parseError"], alertsPollErrorsCounter)
+            yield alertsPollErrorsTotal
+
+        self._alertsFetchedCounter += len(alerts)
+        alertsFetchedTotal.add_metric([], self._alertsFetchedCounter )
+        yield alertsFetchedTotal
+
+        # add metric
+        labels = self._getAlertsLabels(alerts)
+        for (scenario, simulated, remediation), count in labels.items():
+            activeAlerts.add_metric([scenario, simulated, remediation], count)
+
+        yield activeAlerts
+        log.debug(
+            "alertsGaugeUpdated",
+            labelCombinations = len(labels),
+            total = sum(labels.values())
+        )
+
+        elapsed = time.monotonic() - t
+        lastSuccessfulAlertsPollTimestamp.add_metric([endpoint], time.time())
+        yield lastSuccessfulAlertsPollTimestamp
+        log.info(
+            "pollSuccess",
+            endpoint = endpoint,
+            count = len(alerts),
+            durationSeconds = round(elapsed, 3)
+        )
+
+    def _getAlertsLabels(self, alerts: list[Alert]) -> dict[tuple, int]:
+        aggregated: dict[tuple, int] = defaultdict(int)
+        for a in alerts:
+            aggregated[tuple(a.metricLabels().values())] += 1
+            log.debug(
+                "alertsObserved",
+                **a.metricLabels(),
+                alertId = a.id
+            )
+        return aggregated
+
+    def _fetch(self, endpoint: str, path: str, params: dict | None = None) -> list | None:
+        url = f"{self._base_url}{path}"
+        log.debug(
+            "pollStart",
+            endpoint=endpoint
+        )
+        try:
+            response = self._session.get(url, params = params, timeout = _HTTP_TIMEOUT)
+
+            if response.status_code == 204:
+                log.debug(
+                    "pollEmpty",
+                    endpoint=endpoint
+                )
+                return []
+
+            response.raise_for_status()
+            data = response.json()
+
+            if not isinstance(data, list):
+                raise ValueError(
+                    f"Expected list from {path}, got {type(data).__name__}"
+                )
+            return data
+
+        except requests.exceptions.ConnectionError as exc:
+            log.error(
+                "pollFailed",
+                endpoint = endpoint,
+                error_type = "connectionError",
+                detail = str(exc)
+            )
+            raise
+        except requests.exceptions.HTTPError as exc:
+            status = exc.response.status_code if exc.response is not None else "unknown"
+            log.error(
+                "pollFailed",
+                endpoint = endpoint,
+                error_type="httpError",
+                http_status=status,
+                detail=str(exc)
+            )
+            raise
+        except (ValueError, KeyError) as exc:
+            log.error(
+                "pollFailed",
+                endpoint = endpoint,
+                error_type = "parseError",
+                detail = str(exc)
+            )
+            raise
 
 def _buildSession(api_key: str) -> requests.Session:
     session = requests.Session()
