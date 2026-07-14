@@ -12,18 +12,7 @@ def createActiveDecisionsDetails() -> GaugeMetricFamily :
     return GaugeMetricFamily(
         "crowdsec_decisions_details",
         "Details of currently active CrowdSec decisions",
-        labels=[
-            "decision_type",
-            "origin",
-            "scenario",
-            "scope",
-            "val",
-            "decisionId",
-            "uuid",
-            "duration",
-            "until",
-            "simulated"
-        ],
+        labels=[ "decision_type", "origin", "scenario", "scope", "val", "decisionId", "uuid", "duration", "until", "simulated"],
     )
 
 def createDecisionsFetchedTotal() -> CounterMetricFamily:
@@ -59,29 +48,7 @@ def createActiveAlertsDetails() -> GaugeMetricFamily :
     return GaugeMetricFamily(
         "crowdsec_alerts_details",
         "Details of currently active CrowdSec alerts",
-        labels=[
-            "alertId",
-            "uuid",
-            "machineId",
-            "createdAt",
-            "startAt",
-            "stopAt",
-            "scenario",
-            "scenarioHash",
-            "scenarioVersion",
-            "eventsCount",
-            "simulated",
-            "remediation",
-            "ip",
-            "subnet",
-            "country",
-            "asNumber",
-            "asName",
-            "latitude",
-            "longitude",
-            "decisionType",
-            "decisionScope",
-        ],
+        labels=["alertId","uuid","machineId","createdAt","startAt","stopAt","scenario","scenarioHash","scenarioVersion","eventsCount","simulated","remediation","ip","subnet","country","asNumber","asName","latitude","longitude","decisionType","decisionScope",],
     )
 
 def createAlertsFetchedTotal() -> CounterMetricFamily:
@@ -115,7 +82,7 @@ def createActiveAllowlists() -> GaugeMetricFamily :
 
 def createAllowlistItems() -> GaugeMetricFamily:
     return GaugeMetricFamily(
-        "crowdsec_allowlist_item_detail",
+        "crowdsec_allowlist_items_detail",
         "Detail information for each allowlist item",
         labels=["allowlistId", "name", "value", "description", "expiration", "isExpired"],
     )

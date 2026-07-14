@@ -94,6 +94,7 @@ class CrowdSecCollector(Collector):
             activeDecisions.add_metric([dType, origin, scenario, scope], count)
 
         yield activeDecisions
+
         log.debug(
             "activeDecisionsGaugeUpdated",
             labelCombinations = len(labels),
@@ -104,7 +105,8 @@ class CrowdSecCollector(Collector):
         for (dType, origin, scenario, scope, val, decisionId, uuid, duration, until, simulated), count in details.items():
             activeDecisionsDetails.add_metric([dType, origin, scenario, scope, val, decisionId, uuid, duration, until, simulated], count)
 
-        yield activeDecisions
+        yield activeDecisionsDetails
+
         log.debug(
             "activeDecisionsDetailsGaugeUpdated",
             labelCombinations = len(details),
@@ -269,7 +271,7 @@ class CrowdSecCollector(Collector):
 
         details = self._getAlertsDetails(alerts)
         for (alertId,uuid,machineId,createdAt,startAt,stopAt,scenario,scenarioHash,scenarioVersion,eventsCount,simulated,remediation,ip,subnet,country,asNumber,asName,latitude,longitude,decisionType,decisionScope), count in details.items():
-            activeAlerts.add_metric([
+            activeAlertsDetails.add_metric([
                 alertId,
                 uuid,
                 machineId,

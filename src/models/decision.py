@@ -79,10 +79,10 @@ class Decision:
             "scenario": self.scenario,
             "scope": self.scope,
             "val": self.value,
-            "decisionId": self.decisionId,
+            "decisionId": str(self.decisionId),
             "uuid": self.uuid,
             "duration": self.duration,
-            "until": self.until,
-            "simulated": self.simulated,
+            "until": self.until.isoformat() if self.until else "",
+            "simulated": str(self.simulated).lower(),
         }
 
