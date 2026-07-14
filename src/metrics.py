@@ -29,6 +29,35 @@ def createDecisionPollErrorsTotal() -> CounterMetricFamily:
         labels=["endpoint", "error_type"],
     )
 
+""" Alerts """
+def createActiveAlerts() -> GaugeMetricFamily :
+    return GaugeMetricFamily(
+        "crowdsec_alerts",
+        "Number of currently active CrowdSec alerts",
+        labels=["scenario", "simulated", "remediation"],
+    )
+
+def createAlertsFetchedTotal() -> CounterMetricFamily:
+    return CounterMetricFamily(
+        "crowdsec_alerts_fetched_total",
+        "Total alerts fetched from /v1/alerts since exporter start. "
+        "Use rate() for alert spike detection.",
+    )
+
+def createLastSuccessfulAlertsPollTimestamp() -> CounterMetricFamily:
+    return GaugeMetricFamily(
+        "crowdsec_last_successful_alerts_poll_timestamp_seconds",
+        "Unix timestamp (UTC) of the last successful poll per endpoint",
+        labels=["endpoint"],
+    )
+
+def createAlertsPollErrorsTotal() -> CounterMetricFamily:
+    return CounterMetricFamily(
+        "crowdsec_poll_errors_total",
+        "Total failed LAPI poll attempts",
+        labels=["endpoint", "errorType"],
+    )
+
 
 """ Exporter infos """
 def createExporterInfo() -> InfoMetricFamily:
