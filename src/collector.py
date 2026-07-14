@@ -1,0 +1,4 @@
+
+
+class CrowdSecCollector:
+    something: str
