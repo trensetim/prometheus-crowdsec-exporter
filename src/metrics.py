@@ -110,7 +110,14 @@ def createActiveAllowlists() -> GaugeMetricFamily :
     return GaugeMetricFamily(
         "crowdsec_allowlists_items",
         "Number of active (non-expired) items in each CrowdSec allowlist",
-        labels=["name", "allowlistId", "consoleManaged"],
+        labels=["name", "allowlistId", "consoleManaged", "description", "createdAt", "updatedAt"],
+    )
+
+def createAllowlistItems() -> GaugeMetricFamily:
+    return GaugeMetricFamily(
+        "crowdsec_allowlist_item_detail",
+        "Detail information for each allowlist item",
+        labels=["allowlistId", "name", "value", "description", "expiration", "isExpired"],
     )
 
 def createAllowlistsExpiringItems() -> CounterMetricFamily:

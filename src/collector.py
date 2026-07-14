@@ -149,6 +149,7 @@ class CrowdSecCollector(Collector):
         # create new metrics
         # cant use existing metrics cause it would append the new data
         activeAllowlists = metrics.createActiveAllowlists()
+        activeAllowlistItems = metrics.createAllowlistItems()
         expiringItems = metrics.createAllowlistsExpiringItems()
         allowlistsFetchedTotal = metrics.createAllowlistsFetchedTotal()
         lastSuccessfulAllowlistsPollTimestamp = metrics.createLastSuccessfulAllowlistsPollTimestamp()
@@ -185,8 +186,24 @@ class CrowdSecCollector(Collector):
             labels = list(al.metricLabels().values())
             activeAllowlists.add_metric(labels, al.countActive())
             expiringItems.add_metric(labels, al.countExpiringWithin(_EXPIRY_THRESHOLD_SECONDS))
+
+            for item in al.metricItems():
+                activeAllowlistItems.add_metric(
+                    [
+                        item["allowlistId"],
+                        item["name"],
+                        item["value"],
+                        item["description"],
+                        item["expiration"],
+                        item["isExpired"],
+                    ],
+                    1.0   # Gauge-Wert is always 1
+                )
+
         yield activeAllowlists
+        yield activeAllowlistItems
         yield expiringItems
+
         log.debug(
             "allowlistsGaugeUpdated",
             total = len(allowlists)

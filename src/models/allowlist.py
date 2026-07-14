@@ -1,4 +1,5 @@
 
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
@@ -102,7 +103,23 @@ class Allowlist:
             "name": self.name,
             "allowlistId": self.allowlistId,
             "consoleManaged": str(self.consoleManaged).lower(),
+            "description": self.description,
+            "createdAt": self.createdAt.isoformat() if self.createdAt else "",
+            "updatedAt": self.updatedAt.isoformat() if self.updatedAt else "",
         }
+
+    def metricItems(self) -> list[dict[str, str]]:
+        return [
+            {
+                "allowlistId":  self.allowlistId,
+                "name":         self.name,
+                "value":        item.value,
+                "description":  item.description,
+                "expiration":   item.expiration.isoformat() if item.expiration else "",
+                "isExpired":    str(item.isExpired).lower(),
+            }
+            for item in self.items
+        ]
 
     def countExpiringWithin(self, seconds: float) -> int:
         return sum(1 for item in self.items if item.isExpiringWithin(seconds))
