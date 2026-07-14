@@ -57,6 +57,7 @@ class CrowdSecCollector(Collector):
         # create new metrics
         # cant use existing metrics cause it would append the new data
         activeDecisions = metrics.createActiveDecisions()
+        activeDecisionsDetails = metrics.createActiveDecisionsDetails()
         decisionsFetchedTotal = metrics.createDecisionsFetchedTotal()
         lastSuccessfulDecisionsPollTimestamp = metrics.createLastSuccessfulDecisionPollTimestamp()
         decisionsPollErrorsTotal = metrics.createDecisionPollErrorsTotal()
@@ -87,17 +88,29 @@ class CrowdSecCollector(Collector):
         decisionsFetchedTotal.add_metric([], self._decisionsFetchedCounter )
         yield decisionsFetchedTotal
 
-        # add metric
+        # add metrics
         labels = self._getDecisionLabels(decisions)
         for (dType, origin, scenario, scope), count in labels.items():
             activeDecisions.add_metric([dType, origin, scenario, scope], count)
 
         yield activeDecisions
         log.debug(
-            "decisionsGaugeUpdated",
+            "activeDecisionsGaugeUpdated",
             labelCombinations = len(labels),
             total = sum(labels.values())
         )
+
+        details = self._getDecisionDetails(decisions)
+        for (dType, origin, scenario, scope, val, decisionId, uuid, duration, until, simulated), count in details.items():
+            activeDecisionsDetails.add_metric([dType, origin, scenario, scope, val, decisionId, uuid, duration, until, simulated], count)
+
+        yield activeDecisions
+        log.debug(
+            "activeDecisionsDetailsGaugeUpdated",
+            labelCombinations = len(details),
+            total = sum(details.values())
+        )
+
 
         elapsed = time.monotonic() - t
         lastSuccessfulDecisionsPollTimestamp.add_metric([endpoint], time.time())
@@ -116,7 +129,18 @@ class CrowdSecCollector(Collector):
             log.debug(
                 "decision_observed",
                 **d.metricLabels(),
-                value=d.value
+                value = d.value
+            )
+        return aggregated
+
+    def _getDecisionDetails(self, decisions: list[Decision]) -> dict[tuple, int]:
+        aggregated: dict[tuple, int] = defaultdict(int)
+        for d in decisions:
+            aggregated[tuple(d.metricDetails().values())] += 1
+            log.debug(
+                "decision_details_observed",
+                **d.metricDetails(),
+                value = d.value
             )
         return aggregated
 
@@ -167,8 +191,6 @@ class CrowdSecCollector(Collector):
             "allowlistsGaugeUpdated",
             total = len(allowlists)
         )
-
-
 
         elapsed = time.monotonic() - t
         lastSuccessfulAllowlistsPollTimestamp.add_metric([endpoint], time.time())

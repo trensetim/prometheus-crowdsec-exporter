@@ -8,6 +8,13 @@ def createActiveDecisions() -> GaugeMetricFamily :
         labels=["decision_type", "origin", "scenario", "scope"],
     )
 
+def createActiveDecisionsDetails() -> GaugeMetricFamily :
+    return GaugeMetricFamily(
+        "crowdsec_decisions_details",
+        "Details of currently active CrowdSec decisions",
+        labels=["decision_type", "origin", "scenario", "scope", "val", "decisionId", "uuid", "duration", "until", "simulated"],
+    )
+
 def createDecisionsFetchedTotal() -> CounterMetricFamily:
     return CounterMetricFamily(
         "crowdsec_decisions_fetched_total",

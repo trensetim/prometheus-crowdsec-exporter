@@ -25,7 +25,7 @@ class Decision:
     value: str
     decisionId: int
     uuid: str
-    duration: str
+    duration: datetime | None
     until: datetime | None
     simulated: bool
 
@@ -70,5 +70,19 @@ class Decision:
             "origin": self.origin,
             "scenario": self.scenario,
             "scope": self.scope,
+        }
+
+    def metricDetails(self) -> dict[str, str]:
+        return {
+            "decisionType": self.decisionType,
+            "origin": self.origin,
+            "scenario": self.scenario,
+            "scope": self.scope,
+            "val": self.value,
+            "decisionId": self.decisionId,
+            "uuid": self.uuid,
+            "duration": self.duration,
+            "until": self.until,
+            "simulated": self.simulated,
         }
 
