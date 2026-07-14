@@ -149,6 +149,31 @@ class Alert:
             "remediation": str(self.remediation).lower(),
         }
 
+    def metricDetails(self) -> dict[str, str]:
+        return {
+            "alertIdentifier": str(self.id),
+            "uuid": self.uuid,
+            "machineId": self.machineId,
+            "createdAt": self.createdAt.isoformat() if self.createdAt else "",
+            "startAt": self.startAt.isoformat() if self.startAt else "",
+            "stopAt": self.stopAt.isoformat() if self.stopAt else "",
+            "scenario": self.scenario,
+            "scenarioHash": self.scenarioHash,
+            "scenarioVersion": self.scenarioVersion,
+            "eventsCount": str(self.eventsCount),
+            "simulated": str(self.simulated).lower(),
+            "remediation": str(self.remediation).lower(),
+            "ip": self.source.ip if self.source else "",
+            "subnet": self.source.range if self.source else "",
+            "country": self.source.country if self.source else "",
+            "asNumber": self.source.asNumber if self.source else "",
+            "asName": self.source.asName if self.source else "",
+            "latitude": str(self.source.latitude) if self.source else "",
+            "longitude": str(self.source.longitude) if self.source else "",
+            "decisionType": self.decisions[0].decisionType if self.decisions else "",
+            "decisionScope": self.decisions[0].scope if self.decisions else "",
+        }
+
 def _parseMeta(rawMeta: Any) -> dict[str, str]:
     if not isinstance(rawMeta, list):
         return {}

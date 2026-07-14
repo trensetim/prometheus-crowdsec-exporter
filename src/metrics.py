@@ -12,7 +12,18 @@ def createActiveDecisionsDetails() -> GaugeMetricFamily :
     return GaugeMetricFamily(
         "crowdsec_decisions_details",
         "Details of currently active CrowdSec decisions",
-        labels=["decision_type", "origin", "scenario", "scope", "val", "decisionId", "uuid", "duration", "until", "simulated"],
+        labels=[
+            "decision_type",
+            "origin",
+            "scenario",
+            "scope",
+            "val",
+            "decisionId",
+            "uuid",
+            "duration",
+            "until",
+            "simulated"
+        ],
     )
 
 def createDecisionsFetchedTotal() -> CounterMetricFamily:
@@ -42,6 +53,35 @@ def createActiveAlerts() -> GaugeMetricFamily :
         "crowdsec_alerts",
         "Number of currently active CrowdSec alerts",
         labels=["scenario", "simulated", "remediation"],
+    )
+
+def createActiveAlertsDetails() -> GaugeMetricFamily :
+    return GaugeMetricFamily(
+        "crowdsec_alerts_details",
+        "Details of currently active CrowdSec alerts",
+        labels=[
+            "alertId",
+            "uuid",
+            "machineId",
+            "createdAt",
+            "startAt",
+            "stopAt",
+            "scenario",
+            "scenarioHash",
+            "scenarioVersion",
+            "eventsCount",
+            "simulated",
+            "remediation",
+            "ip",
+            "subnet",
+            "country",
+            "asNumber",
+            "asName",
+            "latitude",
+            "longitude",
+            "decisionType",
+            "decisionScope",
+        ],
     )
 
 def createAlertsFetchedTotal() -> CounterMetricFamily:

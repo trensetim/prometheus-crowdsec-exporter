@@ -207,6 +207,7 @@ class CrowdSecCollector(Collector):
         # create new metrics
         # cant use existing metrics cause it would append the new data
         activeAlerts = metrics.createActiveAlerts()
+        activeAlertsDetails = metrics.createActiveAlertsDetails()
         alertsFetchedTotal = metrics.createAlertsFetchedTotal()
         lastSuccessfulAlertsPollTimestamp = metrics.createLastSuccessfulAlertsPollTimestamp()
         alertsPollErrorsTotal = metrics.createAlertsPollErrorsTotal()
@@ -249,6 +250,41 @@ class CrowdSecCollector(Collector):
             total = sum(labels.values())
         )
 
+        details = self._getAlertsDetails(alerts)
+        for (alertId,uuid,machineId,createdAt,startAt,stopAt,scenario,scenarioHash,scenarioVersion,eventsCount,simulated,remediation,ip,subnet,country,asNumber,asName,latitude,longitude,decisionType,decisionScope), count in details.items():
+            activeAlerts.add_metric([
+                alertId,
+                uuid,
+                machineId,
+                createdAt,
+                startAt,
+                stopAt,
+                scenario,
+                scenarioHash,
+                scenarioVersion,
+                eventsCount,
+                simulated,
+                remediation,
+                ip,
+                subnet,
+                country,
+                asNumber,
+                asName,
+                latitude,
+                longitude,
+                decisionType,
+                decisionScope
+                ],
+                count
+            )
+
+        yield activeAlertsDetails
+        log.debug(
+            "alertsDetailsGaugeUpdated",
+            labelCombinations = len(details),
+            total = sum(details.values())
+        )
+
         elapsed = time.monotonic() - t
         lastSuccessfulAlertsPollTimestamp.add_metric([endpoint], time.time())
         yield lastSuccessfulAlertsPollTimestamp
@@ -266,6 +302,17 @@ class CrowdSecCollector(Collector):
             log.debug(
                 "alertsObserved",
                 **a.metricLabels(),
+                alertId = a.id
+            )
+        return aggregated
+
+    def _getAlertsDetails(self, alerts: list[Alert]) -> dict[tuple, int]:
+        aggregated: dict[tuple, int] = defaultdict(int)
+        for a in alerts:
+            aggregated[tuple(a.metricDetails().values())] += 1
+            log.debug(
+                "alertsDetailsObserved",
+                **a.metricDetails(),
                 alertId = a.id
             )
         return aggregated
