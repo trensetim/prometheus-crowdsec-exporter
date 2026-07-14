@@ -48,6 +48,7 @@ class CrowdSecCollector(Collector):
         yield metrics.createExporterInfo()
 
         yield from self._collectDecisions()
+        yield from self._collectAllowlists()
         yield from self._collectAlerts()
         yield self._pollErrorsTotal
 
@@ -119,6 +120,65 @@ class CrowdSecCollector(Collector):
             )
         return aggregated
 
+    def _collectAllowlists(self) -> Iterable[Metric]:
+        allowlistsPollErrorsCounter = 0
+        # create new metrics
+        # cant use existing metrics cause it would append the new data
+        activeAllowlists = metrics.createActiveAllowlists()
+        expiringItems = metrics.createAllowlistsExpiringItems()
+        allowlistsFetchedTotal = metrics.createAllowlistsFetchedTotal()
+        lastSuccessfulAllowlistsPollTimestamp = metrics.createLastSuccessfulAllowlistsPollTimestamp()
+        allowlistsPollErrorsTotal = metrics.createAllowlistsPollErrorsTotal()
+
+        # fetch decisions from LAPI
+        endpoint = "allowlists"
+        t = time.monotonic()
+
+        try:
+            raw = self._fetch(endpoint, _ALLOWLISTS_PATH)
+        except requests.exceptions.ConnectionError:
+            self._pollErrorsTotal.add_metric([endpoint, "connectionError"], 1)
+            return
+
+        if raw is None:
+            return
+
+        # parse data
+        allowlists, skipped = parseAllowlists(raw)
+
+        # check for parse errors and in case of errors send metric
+        if skipped:
+            allowlistsPollErrorsCounter = skipped
+            allowlistsPollErrorsTotal.add_metric([endpoint, "parseError"], allowlistsPollErrorsCounter)
+            yield allowlistsPollErrorsTotal
+
+        self._allowlistsFetchedCounter += len(allowlists)
+        allowlistsFetchedTotal.add_metric([], self._allowlistsFetchedCounter )
+        yield allowlistsFetchedTotal
+
+        # add metric
+        for al in allowlists:
+            labels = list(al.metricLabels().values())
+            activeAllowlists.add_metric(labels, al.countActive())
+            expiringItems.add_metric(labels, al.countExpiringWithin(_EXPIRY_THRESHOLD_SECONDS))
+        yield activeAllowlists
+        yield expiringItems
+        log.debug(
+            "allowlistsGaugeUpdated",
+            total = len(allowlists)
+        )
+
+
+
+        elapsed = time.monotonic() - t
+        lastSuccessfulAllowlistsPollTimestamp.add_metric([endpoint], time.time())
+        yield lastSuccessfulAllowlistsPollTimestamp
+        log.info(
+            "pollSuccess",
+            endpoint = endpoint,
+            count = len(allowlists),
+            durationSeconds = round(elapsed, 3)
+        )
 
     def _collectAlerts(self) -> Iterable[Metric]:
         alertsPollErrorsCounter = 0
