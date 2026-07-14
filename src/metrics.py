@@ -58,6 +58,41 @@ def createAlertsPollErrorsTotal() -> CounterMetricFamily:
         labels=["endpoint", "errorType"],
     )
 
+""" Allowlists """
+def createActiveAllowlists() -> GaugeMetricFamily :
+    return GaugeMetricFamily(
+        "crowdsec_allowlists_items",
+        "Number of active (non-expired) items in each CrowdSec allowlist",
+        labels=["name", "allowlistId", "consoleManaged"],
+    )
+
+def createAllowlistsExpiringItems() -> CounterMetricFamily:
+    return GaugeMetricFamily(
+        "crowdsec_allowlist_expiring_items",
+        "Number of allowlist items expiring within the configured threshold window",
+        labels=["name", "allowlistId", "consoleManaged"],
+    )
+
+def createAllowlistsFetchedTotal() -> CounterMetricFamily:
+    return CounterMetricFamily(
+        "crowdsec_allowlists_fetched_total",
+        "Total allowlists fetched from /v1/allowlists since exporter start. "
+        "Use rate() for 'new allowlists per second' - cannot be derived from the Gauge.",
+    )
+
+def createLastSuccessfulAllowlistsPollTimestamp() -> CounterMetricFamily:
+    return GaugeMetricFamily(
+        "crowdsec_last_successful_allowlists_poll_timestamp_seconds",
+        "Unix timestamp (UTC) of the last successful poll per endpoint",
+        labels=["endpoint"],
+    )
+
+def createAllowlistsPollErrorsTotal() -> CounterMetricFamily:
+    return CounterMetricFamily(
+        "crowdsec_poll_errors_total",
+        "Total failed LAPI poll attempts",
+        labels=["endpoint", "errorType"],
+    )
 
 """ Exporter infos """
 def createExporterInfo() -> InfoMetricFamily:
