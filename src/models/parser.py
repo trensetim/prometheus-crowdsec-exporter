@@ -1,6 +1,7 @@
 from typing import Any
 
 from src.models.decision import Decision
+from src.models.allowlist import Allowlist
 from src.models.alert import Alert
 from src.logger import getLogger
 
@@ -8,6 +9,9 @@ log = getLogger(__name__)
 
 def parseDecisions(raw_list: list[Any],) -> tuple[list[Decision], int]:
     return _parseList(raw_list, Decision.mapClassFromApiDict, "decisions")
+
+def parseAllowlists(raw_list: list[Any],) -> tuple[list[Allowlist], int]:
+    return _parseList(raw_list, Allowlist.mapClassFromApiDict, "allowlists")
 
 def parseAlerts(raw_list: list[Any],) -> tuple[list[Alert], int]:
     return _parseList(raw_list, Alert.mapClassFromApiDict, "alerts")
