@@ -1,0 +1,27 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# Dev environment
+dev/
+.env
+.env.*
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Tooling
+.git/
+.gitignore
+.github/
+*.md
+
+# Second Dockerfile
+Dockerfile.dev
+
+# requirements source (only the locked .txt is needed in the image)
+requirements.in
