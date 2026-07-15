@@ -1,7 +1,7 @@
 ARG APP_VERSION=unknown
 ARG GIT_COMMIT=unknown
 
-FROM python:3.14-trixie
+FROM python:3.14-alpine
 
 ARG APP_VERSION
 ARG GIT_COMMIT
