@@ -12,7 +12,7 @@ RUN --mount=type=secret,id=host_openssl_cacerts,target=/etc/ssl/certs/ca-certifi
 WORKDIR /app
 USER nobody
 ENV PYTHONUNBUFFERED="1"
-EXPOSE 8000
+EXPOSE 8001
 
 COPY --chown=nobody:nobody src/main/python/ /app
 RUN echo "${VERSION}" >/app/version.txt

@@ -10,7 +10,7 @@
             "cwd": "${workspaceFolder}/src/main/python",
 			"env": {
                 "CROWDSEC_LAPI_URL": "http://localhost:8080",
-                "METRICS_PORT": "8000",
+                "BIND_PORT": "8001",
                 "POLL_INTERVAL_SECONDS": "15",
                 "LOG_LEVEL": "DEBUG",
                 "APP_VERSION": "dev",

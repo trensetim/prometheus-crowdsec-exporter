@@ -38,7 +38,7 @@ docker compose up --build
 curl -H "X-Api-Key: dev-bouncer-key-12345" http://localhost:8080/v1/decisions | jq .
 
 # Check metrics
-curl -s http://localhost:8000/metrics | grep crowdsec
+curl -s http://localhost:8001/metrics | grep crowdsec
 
 # Work with the compose stack
 (

@@ -18,7 +18,8 @@ def _log_startup_info():
     LOGGER.info("startup",
         version = CONFIG.version,
         logLevel = CONFIG.logLevel,
-        metricsPort = CONFIG.metricsPort,
+        port = CONFIG.bindPort,
+        host = CONFIG.bindHost,
         crowdSecLapiURL = CONFIG.crowdSecLapiURL,
     )
 
@@ -28,8 +29,8 @@ def _init_logging() -> logging.Logger:
 
 def _start_metrics_server() -> Tuple[WSGIServer, threading.Thread]:
     REGISTRY.register(CrowdSecCollector(CONFIG))
-    result = start_http_server(port = CONFIG.metricsPort, addr = CONFIG.metricsHost)
-    LOGGER.info("metricsServerStarted", port = CONFIG.metricsPort, host = CONFIG.metricsHost)
+    result = start_http_server(port = CONFIG.bindPort, addr = CONFIG.bindHost)
+    LOGGER.info("metricsServerStarted", port = CONFIG.bindPort, host = CONFIG.bindHost)
     return result
 
 def _stop_metrics_server(server: Tuple[WSGIServer, threading.Thread]):
