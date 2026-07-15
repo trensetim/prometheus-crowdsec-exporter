@@ -8,6 +8,16 @@
 # Local development
 The `src/test/compose` directory contains a complete local stack with a mock CrowdSec LAPI, Prometheus, and Grafana.
 
+To prepare the codebase, run
+```bash
+cd src/main/python
+python -m venv .
+source bin/activate
+pip install build
+python -m build
+pip install .
+```
+
 ## Start the dev stack
 ```bash
 cd src/test/compose

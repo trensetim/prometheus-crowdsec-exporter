@@ -9,7 +9,7 @@ import requests
 
 from config import Config
 from logger import getLogger
-import metrics as metrics
+import metrics
 from models import (
     Alert,
     Decision,
