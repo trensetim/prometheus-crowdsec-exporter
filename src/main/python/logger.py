@@ -26,7 +26,6 @@ def configure(log_level: str) -> None:
             structlog.stdlib.add_log_level,
             structlog.processors.StackInfoRenderer(),
             structlog.processors.ExceptionRenderer(),
-            _maskSensitiveFields,
             structlog.processors.JSONRenderer(serializer=_serialize_json),
         ],
         wrapper_class=structlog.stdlib.BoundLogger,
@@ -51,22 +50,3 @@ def _serialize_json(obj: object, *args, **kwargs) -> str:
         sorted_obj[key] = obj[key]
 
     return json.dumps(sorted_obj, *args, **kwargs)
-
-# custom processor - arguments are required by structlog
-def _maskSensitiveFields(
-    logger: logging.Logger,
-    method_name: str,
-    event_dict: dict,
-) -> dict:
-    sensitive_keys = frozenset([
-        "key",
-        "api_key",
-        "apiKey",
-        "password",
-        "token",
-        "secret"
-    ])
-    for key in sensitive_keys:
-        if key in event_dict:
-            event_dict[key] = "***"
-    return event_dict
