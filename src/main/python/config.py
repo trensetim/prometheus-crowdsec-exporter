@@ -10,7 +10,6 @@ class Config:
     apiKey: str
     metricsPort: int
     metricsHost: str
-    pollingIntervalInSeconds: int
     logLevel: str
 
     @classmethod
@@ -20,7 +19,6 @@ class Config:
             apiKey = _require("CROWDSEC_API_KEY"),
             metricsPort = _getInt("METRICS_PORT", "8000"),
             metricsHost = os.getenv("METRICS_HOST", "0.0.0.0"),
-            pollingIntervalInSeconds = _getInt("POLL_INTERVAL_SECONDS", "60"),
             logLevel = os.getenv("LOG_LEVEL", "INFO").upper(),
             version = Config.read_version(),
         )

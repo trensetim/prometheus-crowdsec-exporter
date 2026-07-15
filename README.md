@@ -74,12 +74,10 @@ The exporter polls the LAPI on every `/metrics` scrape request by Prometheus and
 
 # Configuration (Environment variables)
 
-| Variable                | Required | Default   | Description                                                       |
-| ----------------------- | -------- | --------- | ----------------------------------------------------------------- |
-| `CROWDSEC_LAPI_URL`     | ✓        | –         | e.g. `http://crowdsec.crowdsec-monitoring.svc.cluster.local:8080` |
-| `CROWDSEC_API_KEY`      | ✓        | –         | Bouncer API key – read-only, injected via Kubernetes Secret       |
-| `METRICS_PORT`          |          | `8000`    | Port for the `/metrics` HTTP endpoint                             |
-| `METRICS_HOST`          |          | `0.0.0.0` | Bind address (NetworkPolicy restricts inbound)                    |
-| `POLL_INTERVAL_SECONDS` |          | `60`      | Polling interval in seconds                                       |
-| `LOG_LEVEL`             |          | `INFO`    | `DEBUG` / `INFO` / `WARNING` / `ERROR`                            |
-
+| Variable            | Default         | Description                                                       |
+| ------------------- | --------------- | ----------------------------------------------------------------- |
+| `CROWDSEC_LAPI_URL` | none (required) | e.g. `http://crowdsec.crowdsec-monitoring.svc.cluster.local:8080` |
+| `CROWDSEC_API_KEY`  | none (required) | `X-Api-Key` header value                                          |
+| `METRICS_PORT`      | `8000`          | Bind port for the `/metrics` HTTP endpoint                        |
+| `METRICS_PORT`      | `0.0.0.0`       | Bind address for the `/metrics` endpoint                          |
+| `LOG_LEVEL`         | `INFO`          | `DEBUG` / `INFO` / `WARNING` / `ERROR`                            |
