@@ -1,0 +1,15 @@
+# Python venv
+/bin
+/lib
+/lib64
+/include
+/pyvenv.cfg
+
+# Intermediate compiled files
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Final python build output
+dist/
