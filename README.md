@@ -8,12 +8,10 @@ flowchart LR
     ex["Exporter Container"]
     prom["Prometheus"]
     gf["Grafana"]
-    stdout
 
     lapi -- "Decisions/Alerts/Allowlists" --> ex
     ex -- "Metrics"  --> prom
     prom -- "Metrics Data" --> gf
-    ex -- structured JSON logs --> stdout
 ```
 
 ... and in direction of access:
@@ -35,10 +33,10 @@ flowchart RL
     gf -- PromQL --> prom
 ```
 
-
 The exporter polls the LAPI on every `/metrics` scrape request by Prometheus and yields fresh metrics each time.
 
 # Metrics
+
 ## Decisions
 
 | Metric                                                     | Type    | Labels                                                                                                       | Description                                    |
@@ -49,6 +47,7 @@ The exporter polls the LAPI on every `/metrics` scrape request by Prometheus and
 | `crowdsec_last_successful_decision_poll_timestamp_seconds` | Gauge   | `endpoint`                                                                                                   | Unix timestamp of last successful poll         |
 
 ## Alerts
+
 | Metric                                                   | Type    | Labels                                                                                                        | Description                                         |
 | -------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
 | `crowdsec_alerts`                                        | Gauge   | `scenario`, `simulated`, `remediation`                                                                        | Currently active alerts aggregated by scenario      |
@@ -57,6 +56,7 @@ The exporter polls the LAPI on every `/metrics` scrape request by Prometheus and
 | `crowdsec_last_successful_alerts_poll_timestamp_seconds` | Gauge   | `endpoint`                                                                                                    | Unix timestamp of last successful poll              |
 
 ## Allowlists
+
 | Metric                                                       | Type    | Labels                                                                   | Description                                        |
 | ------------------------------------------------------------ | ------- | ------------------------------------------------------------------------ | -------------------------------------------------- |
 | `crowdsec_allowlists_items`                                  | Gauge   | `name`, `allowlistId`, `consoleManaged`                                  | Number of active (non-expired) items per allowlist |
@@ -66,12 +66,14 @@ The exporter polls the LAPI on every `/metrics` scrape request by Prometheus and
 | `crowdsec_last_successful_allowlists_poll_timestamp_seconds` | Gauge   | `endpoint`                                                               | Unix timestamp of last successful poll             |
 
 ## Exporter health
+
 | Metric                       | Type    | Labels                   | Description               |
 | ---------------------------- | ------- | ------------------------ | ------------------------- |
 | `crowdsec_poll_errors_total` | Counter | `endpoint`, `error_type` | Failed LAPI poll attempts |
 | `crowdsec_exporter_info`     | Info    | `version`, `git_commit`  | Build metadata            |
 
 # Configuration (Environment variables)
+
 | Variable                | Required | Default   | Description                                                       |
 | ----------------------- | -------- | --------- | ----------------------------------------------------------------- |
 | `CROWDSEC_LAPI_URL`     | ✓        | –         | e.g. `http://crowdsec.crowdsec-monitoring.svc.cluster.local:8080` |
@@ -80,8 +82,7 @@ The exporter polls the LAPI on every `/metrics` scrape request by Prometheus and
 | `METRICS_HOST`          |          | `0.0.0.0` | Bind address (NetworkPolicy restricts inbound)                    |
 | `POLL_INTERVAL_SECONDS` |          | `60`      | Polling interval in seconds                                       |
 | `LOG_LEVEL`             |          | `INFO`    | `DEBUG` / `INFO` / `WARNING` / `ERROR`                            |
-| `APP_VERSION`           |          | `unknown` | Injected via `--build-arg` at image build time                    |
-| `GIT_COMMIT`            |          | `unknown` | Injected via `--build-arg` at image build time                    |
+
 
 # Logging
 All log output is structured JSON to `stdout`. \

@@ -25,8 +25,7 @@ def main() -> None:
 
     log.info(
         "startup",
-        appVersion = config.appVersion,
-        gitCommit = config.gitCommit,
+        version = config.version,
         logLevel = config.logLevel,
         metricsPort = config.metricsPort,
         pollingIntervalInSeconds = config.pollingIntervalInSeconds,

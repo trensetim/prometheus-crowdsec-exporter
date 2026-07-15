@@ -52,8 +52,7 @@ curl -s http://localhost:8000/metrics | grep crowdsec
 ## Production image (distroless)
 ```bash
 docker build \
-  --build-arg APP_VERSION=1.0.0 \
-  --build-arg GIT_COMMIT=$(git rev-parse --short HEAD) \
+  --build-arg APP_VERSION="1.0.0-$(git rev-parse --short HEAD)" \
   -f src/build/docker/Dockerfile \
   -t crowdsec-exporter:1.0.0 \
   .
