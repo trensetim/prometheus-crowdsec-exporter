@@ -158,7 +158,7 @@ class Alert:
             "asName": self.source.asName if self.source else "",
             "latitude": str(self.source.latitude) if self.source else "",
             "longitude": str(self.source.longitude) if self.source else "",
-            "decisionType": self.decisions[0].decisionType if self.decisions else "",
+            "decisionType": self.decisions[0].type if self.decisions else "",
             "decisionScope": self.decisions[0].scope if self.decisions else "",
         }
 

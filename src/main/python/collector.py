@@ -36,14 +36,17 @@ class CrowdSecCollector(Collector):
     _allowlists: list[Allowlist] = []
     _alerts: list[Alert] = []
 
+    _last_decision_ids: set[str] = set()
+    """UUIDs of the decisions of last poll, to prevent double-counting"""
+
     _metric_polls_total: int = 0
     _metric_poll_errors_total: int = 0
-    _metric_last_poll_duration_seconds:float = 0
+    _metric_last_poll_duration_seconds: float = 0
+    _metric_decisions_total: int = 0
 
     def __init__(self, config: Config) -> None:
         self._session = _open_session(config.apiKey, config.version)
         self._base_url = config.crowdSecLapiURL.rstrip("/")
-        self._decisionsFetchedCounter = 0
         self._allowlistsFetchedCounter = 0
         self._alertsFetchedCounter = 0
         log.info("collector_initialised", lapi_url=self._base_url)
@@ -56,7 +59,8 @@ class CrowdSecCollector(Collector):
         yield metrics.poll_errors_total(self._metric_poll_errors_total)
         yield metrics.last_poll_duration_seconds(self._metric_last_poll_duration_seconds)
 
-        yield from self._collectDecisions()
+        yield self._collect_decisions()
+        yield self._collect_decisions_total()
         yield from self._collectAllowlists()
         yield from self._collectAlerts()
 
@@ -94,61 +98,17 @@ class CrowdSecCollector(Collector):
             durationSeconds = self._metric_last_poll_duration_seconds
         )
 
-    def _collectDecisions(self) -> Iterable[Metric]:
-        activeDecisions = metrics.createActiveDecisions()
-        activeDecisionsDetails = metrics.createActiveDecisionsDetails()
-        decisionsFetchedTotal = metrics.createDecisionsFetchedTotal()
+    def _collect_decisions(self) -> Metric:
+        decisions = metrics.decisions()
+        for d in self._decisions:
+            decisions.add_metric(d.metric_label_values(), 1)
+        return decisions
 
-        self._decisionsFetchedCounter += len(self._decisions)
-        decisionsFetchedTotal.add_metric([], self._decisionsFetchedCounter )
-        yield decisionsFetchedTotal
-
-            # add metrics
-        labels = self._getDecisionLabels(self._decisions)
-        for (dType, origin, scenario, scope), count in labels.items():
-            activeDecisions.add_metric([dType, origin, scenario, scope], count)
-
-        yield activeDecisions
-
-        log.debug(
-            "activeDecisionsGaugeUpdated",
-            labelCombinations = len(labels),
-            total = sum(labels.values())
-        )
-
-        details = self._getDecisionDetails(self._decisions)
-        for (dType, origin, scenario, scope, val, decisionId, uuid, duration, until, simulated), count in details.items():
-            activeDecisionsDetails.add_metric([dType, origin, scenario, scope, val, decisionId, uuid, duration, until, simulated], count)
-
-        yield activeDecisionsDetails
-
-        log.debug(
-            "activeDecisionsDetailsGaugeUpdated",
-            labelCombinations = len(details),
-            total = sum(details.values())
-        )
-
-    def _getDecisionLabels(self, decisions: list[Decision]) -> dict[tuple, int]:
-        aggregated: dict[tuple, int] = defaultdict(int)
-        for d in decisions:
-            aggregated[tuple(d.metricLabels().values())] += 1
-            log.debug(
-                "decision_observed",
-                **d.metricLabels(),
-                value = d.value
-            )
-        return aggregated
-
-    def _getDecisionDetails(self, decisions: list[Decision]) -> dict[tuple, int]:
-        aggregated: dict[tuple, int] = defaultdict(int)
-        for d in decisions:
-            aggregated[tuple(d.metricDetails().values())] += 1
-            log.debug(
-                "decision_details_observed",
-                **d.metricDetails(),
-                value = d.value
-            )
-        return aggregated
+    def _collect_decisions_total(self) -> Metric:
+        new_decisions = [d for d in self._decisions if d.uuid not in self._last_decision_ids]
+        self._metric_decisions_total += len(new_decisions)
+        self._last_decision_ids = {d.uuid for d in self._decisions}
+        return metrics.decisions_total(self._metric_decisions_total)
 
     def _collectAllowlists(self) -> Iterable[Metric]:
         activeAllowlists = metrics.createActiveAllowlists()

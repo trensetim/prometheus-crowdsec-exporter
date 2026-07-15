@@ -1,26 +1,22 @@
 from prometheus_client.metrics_core import GaugeMetricFamily, CounterMetricFamily, InfoMetricFamily
 
+from models import Decision
+
 # --- Descions ---
-def createActiveDecisions() -> GaugeMetricFamily :
+def decisions() -> GaugeMetricFamily:
     return GaugeMetricFamily(
         "crowdsec_decisions",
         "Number of currently active CrowdSec decisions",
-        labels=["decision_type", "origin", "scenario", "scope"],
+        labels = Decision.metric_labels(),
     )
 
-def createActiveDecisionsDetails() -> GaugeMetricFamily :
-    return GaugeMetricFamily(
-        "crowdsec_decisions_details",
-        "Details of currently active CrowdSec decisions",
-        labels=[ "decision_type", "origin", "scenario", "scope", "val", "decisionId", "uuid", "duration", "until", "simulated"],
+def decisions_total(current_total: int) -> CounterMetricFamily:
+    m = CounterMetricFamily(
+        "crowdsec_decisions_total",
+        "Total decisions fetched from /v1/decisions since exporter start"
     )
-
-def createDecisionsFetchedTotal() -> CounterMetricFamily:
-    return CounterMetricFamily(
-        "crowdsec_decisions_fetched_total",
-        "Total decisions fetched from /v1/decisions since exporter start. "
-        "Use rate() for 'new decisions per second' - cannot be derived from the Gauge.",
-    )
+    m.add_metric([], current_total)
+    return m
 
 def createLastSuccessfulDecisionPollTimestamp() -> CounterMetricFamily:
     return GaugeMetricFamily(
