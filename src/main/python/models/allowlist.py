@@ -13,8 +13,8 @@ from models._base import (
 class AllowlistItem:
     value: str
     description: str
-    createdAt: datetime | None
-    expiration: datetime | None
+    created_at: datetime
+    expiration: datetime
 
     @classmethod
     def parse(cls, raw: dict[str, Any]) -> "AllowlistItem": # pylint: disable=missing-function-docstring
@@ -24,86 +24,114 @@ class AllowlistItem:
         if not raw.get("value"):
             raise ValueError("AllowlistItem is missing value")
 
+        created_at = datetimeField(raw, "created_at") or datetime.fromtimestamp(0, tz=timezone.utc)
+        expiration = datetimeField(raw, "expiration") or created_at
+
         return cls(
             value = strField(raw, "value"),
             description = strField(raw, "description", ""),
-            createdAt = datetimeField(raw, "created_at"),
-            expiration = datetimeField(raw, "expiration"),
+            created_at = created_at,
+            expiration = expiration,
         )
 
-    def isExpiringWithin(self, seconds: float) -> bool:
-        if self.expiration is None:
-            return False
-        now = datetime.now(tz = timezone.utc)
-        remaining = (self.expiration - now).total_seconds()
-        return 0 < remaining <= seconds
+    @staticmethod
+    def metric_labels() -> list[str]:
+        return [
+            "allowlist_id",
+            "value",
+            "description",
+            "created_at",
+            "expiration"
+        ]
 
-    @property
-    def isExpired(self) -> bool:
-        if self.expiration is None:
-            return False
-        return datetime.now(tz=timezone.utc) > self.expiration
+    def metric_label_values(self, allowlist_id: str) -> list[str]:
+        return [
+            allowlist_id,
+            self.value,
+            self.description,
+            self.created_at.isoformat(),
+            self.expiration.isoformat()
+        ]
 
+    @staticmethod
+    def created_metric_labels() -> list[str]:
+        return ["allowlist_id", "value"]
+    def created_metric_label_values(self, allowlist_id: str) -> list[str]:
+        return [allowlist_id, self.value]
+    @staticmethod
+    def expiration_metric_labels() -> list[str]:
+        return AllowlistItem.created_metric_labels()
+    def expiration_metric_label_values(self, allowlist_id: str) -> list[str]:
+        return self.created_metric_label_values(allowlist_id)
 
 @dataclass(frozen = True)
 class Allowlist:
     name: str
-    allowlistId: str
+    id: str
     description: str
-    items: tuple[AllowlistItem, ...]
-    createdAt: datetime | None
-    updatedAt: datetime | None
-    consoleManaged: bool
+    items: list[AllowlistItem]
+    created_at: datetime
+    updated_at: datetime
+    console_managed: bool
 
     @classmethod
-    def parse(cls, raw: dict[str, Any]) -> "Allowlist | None": # pylint: disable=missing-function-docstring
+    def parse(cls, raw: dict[str, Any]) -> "Allowlist": # pylint: disable=missing-function-docstring
         if not isinstance(raw, dict):
             raise ValueError("Allowlist is not a dict")
 
         if not raw.get("name"):
             raise ValueError("Allowlist is missing name")
 
-        rawItems = raw.get("items") or []
-        items = tuple(
-            item for rd in rawItems
-            if (item := AllowlistItem.parse(rd)) is not None
-        )
+        raw_items = raw.get("items") or []
+        items = [AllowlistItem.parse(rd) for rd in raw_items]
 
         return cls(
             name = strField(raw, "name"),
-            allowlistId = strField(raw, "allowlist_id"),
+            id = strField(raw, "allowlist_id"),
             description = strField(raw, "description"),
             items = items,
-            createdAt = datetimeField(raw, "created_at"),
-            updatedAt = datetimeField(raw, "updated_at"),
-            consoleManaged = boolField(raw, "console_managed")
+            created_at = datetimeField(raw, "created_at") or datetime.fromtimestamp(0, tz=timezone.utc),
+            updated_at = datetimeField(raw, "updated_at") or datetime.fromtimestamp(0, tz=timezone.utc),
+            console_managed = boolField(raw, "console_managed")
         )
 
-    def metricLabels(self) -> dict[str, str]:
-        return {
-            "name": self.name,
-            "allowlistId": self.allowlistId,
-            "consoleManaged": str(self.consoleManaged).lower(),
-            "description": self.description,
-            "createdAt": self.createdAt.isoformat() if self.createdAt else "",
-            "updatedAt": self.updatedAt.isoformat() if self.updatedAt else "",
-        }
-
-    def metricItems(self) -> list[dict[str, str]]:
+    @staticmethod
+    def metric_labels() -> list[str]:
         return [
-            {
-                "allowlistId":  self.allowlistId,
-                "name":         self.name,
-                "value":        item.value,
-                "description":  item.description,
-                "expiration":   item.expiration.isoformat() if item.expiration else "",
-                "isExpired":    str(item.isExpired).lower(),
-            }
-            for item in self.items
+            "name",
+            "id",
+            "console_managed",
+            "description",
+            "created_at",
+            "updated_at",
         ]
 
-    def countExpiringWithin(self, seconds: float) -> int:
-        return sum(1 for item in self.items if item.isExpiringWithin(seconds))
+    def metric_label_values(self) -> list[str]:
+        return [
+            self.name,
+            self.id,
+            str(self.console_managed).lower(),
+            self.description,
+            self.created_at.isoformat(),
+            self.updated_at.isoformat(),
+        ]
 
-    def countActive(self) -> int:
-        return sum(1 for item in self.items if not item.isExpired)
+    @staticmethod
+    def created_metrics_labels() -> list[str]:
+        return ["name", "id"]
+
+    def created_metrics_label_values(self) -> list[str]:
+        return [self.name, self.id]
+
+    @staticmethod
+    def updated_metrics_labels() -> list[str]:
+        return Allowlist.created_metrics_labels()
+    def updated_metrics_label_values(self) -> list[str]:
+        return self.created_metrics_label_values()
+
+    @staticmethod
+    def console_managed_metrics_labels() -> list[str]:
+        return ["console_managed"]
+    def console_managed_metrics_label_values(self) -> list[str]:
+        return [str(self.console_managed).lower()]
+

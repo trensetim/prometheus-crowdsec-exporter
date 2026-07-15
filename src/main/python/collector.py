@@ -30,6 +30,7 @@ _EXPIRY_THRESHOLD_SECONDS = 86_400  # 24h
 class CrowdSecCollector(Collector):
 
     _session: requests.Session
+    _config_version: str
 
     # parsed responses from the last poll
     _decisions: list[Decision] = []
@@ -38,30 +39,44 @@ class CrowdSecCollector(Collector):
 
     _last_decision_ids: set[str] = set()
     """UUIDs of the decisions of last poll, to prevent double-counting"""
+    _last_allowlist_ids: set[str] = set()
+    """IDs of the allowlists of last poll, to prevent double-counting"""
+    _last_allowlist_items: set[str] = set()
+    """Values of the allowlist items of last poll, to prevent double-counting (across all allowlists)"""
 
     _metric_polls_total: int = 0
     _metric_poll_errors_total: int = 0
     _metric_last_poll_duration_seconds: float = 0
     _metric_decisions_total: int = 0
+    _metric_allowlists_total: int = 0
+    _metric_allowlist_items_total: int = 0
 
     def __init__(self, config: Config) -> None:
         self._session = _open_session(config.apiKey, config.version)
         self._base_url = config.crowdSecLapiURL.rstrip("/")
-        self._allowlistsFetchedCounter = 0
+        self._config_version = config.version
         self._alertsFetchedCounter = 0
         log.info("collector_initialised", lapi_url=self._base_url)
 
     def collect(self) -> Iterable[Metric]:
         self.poll()
 
-        yield metrics.createExporterInfo()
+        yield metrics.exporter_info(self._config_version)
         yield metrics.polls_total(self._metric_polls_total)
         yield metrics.poll_errors_total(self._metric_poll_errors_total)
         yield metrics.last_poll_duration_seconds(self._metric_last_poll_duration_seconds)
 
         yield self._collect_decisions()
         yield self._collect_decisions_total()
-        yield from self._collectAllowlists()
+        yield self._collect_allowlists()
+        yield self._collect_allowlists_total()
+        yield self._collect_allowlist_created()
+        yield self._collect_allowlist_updated()
+        yield self._collect_allowlist_console_managed()
+        yield self._collect_allowlist_items()
+        yield self._collect_allowlist_items_total()
+        yield self._collect_allowlist_item_created()
+        yield self._collect_allowlist_item_expiration()
         yield from self._collectAlerts()
 
 
@@ -110,40 +125,63 @@ class CrowdSecCollector(Collector):
         self._last_decision_ids = {d.uuid for d in self._decisions}
         return metrics.decisions_total(self._metric_decisions_total)
 
-    def _collectAllowlists(self) -> Iterable[Metric]:
-        activeAllowlists = metrics.createActiveAllowlists()
-        activeAllowlistItems = metrics.createAllowlistItems()
-        expiringItems = metrics.createAllowlistsExpiringItems()
-        allowlistsFetchedTotal = metrics.createAllowlistsFetchedTotal()
-
-
-        self._allowlistsFetchedCounter += len(self._allowlists)
-        allowlistsFetchedTotal.add_metric([], self._allowlistsFetchedCounter )
-        yield allowlistsFetchedTotal
-
-        # add metric
+    def _collect_allowlists(self) -> Metric:
+        allowlists = metrics.allowlists()
         for al in self._allowlists:
-            labels = list(al.metricLabels().values())
-            activeAllowlists.add_metric(labels, al.countActive())
-            expiringItems.add_metric(labels, al.countExpiringWithin(_EXPIRY_THRESHOLD_SECONDS))
+            allowlists.add_metric(al.metric_label_values(), 1)
+        return allowlists
 
-            for item in al.metricItems():
-                activeAllowlistItems.add_metric(
-                    [
-                        item["allowlistId"],
-                        item["name"],
-                        item["value"],
-                        item["description"],
-                        item["expiration"],
-                        item["isExpired"],
-                    ],
-                    1.0   # Gauge-Wert is always 1
-                )
+    def _collect_allowlist_created(self) -> Metric:
+        m = metrics.allowlist_created()
+        for al in self._allowlists:
+            m.add_metric(al.created_metrics_label_values(), al.created_at.timestamp())
+        return m
 
-        yield activeAllowlists
-        yield activeAllowlistItems
-        yield expiringItems
+    def _collect_allowlist_updated(self) -> Metric:
+        m = metrics.allowlist_updated()
+        for al in self._allowlists:
+            m.add_metric(al.updated_metrics_label_values(), al.updated_at.timestamp())
+        return m
 
+    def _collect_allowlist_console_managed(self) -> Metric:
+        m = metrics.allowlist_console_managed()
+        for al in self._allowlists:
+            m.add_metric(al.console_managed_metrics_label_values(), 1 if al.console_managed else 0)
+        return m
+
+    def _collect_allowlists_total(self) -> Metric:
+        new_allowlists = [al for al in self._allowlists if al.id not in self._last_allowlist_ids]
+        self._metric_allowlists_total += len(new_allowlists)
+        self._last_allowlist_ids = {al.id for al in self._allowlists}
+        return metrics.allowlists_total(self._metric_allowlists_total)
+
+    def _collect_allowlist_items(self) -> Metric:
+        allowlist_items = metrics.allowlist_items()
+        for al in self._allowlists:
+            for item in al.items:
+                allowlist_items.add_metric(item.metric_label_values(al.id), 1)
+        return allowlist_items
+
+    def _collect_allowlist_items_total(self) -> Metric:
+        allowlist_item_values_flat = [item.value for al in self._allowlists for item in al.items]
+        new_allowlist_item_values = [item_value for item_value in allowlist_item_values_flat if item_value not in self._last_allowlist_items]
+        self._metric_allowlist_items_total += len(new_allowlist_item_values)
+        self._last_allowlist_items = allowlist_item_values_flat
+        return metrics.allowlist_items_total(self._metric_allowlist_items_total)
+
+    def _collect_allowlist_item_created(self) -> Metric:
+        allowlist_items = metrics.allowlist_item_created()
+        for al in self._allowlists:
+            for item in al.items:
+                allowlist_items.add_metric(item.created_metric_label_values(al.id), item.created_at.timestamp())
+        return allowlist_items
+
+    def _collect_allowlist_item_expiration(self) -> Metric:
+        allowlist_items = metrics.allowlist_item_expiration()
+        for al in self._allowlists:
+            for item in al.items:
+                allowlist_items.add_metric(item.expiration_metric_label_values(al.id), item.expiration.timestamp())
+        return allowlist_items
 
     def _collectAlerts(self) -> Iterable[Metric]:
         # create new metrics
