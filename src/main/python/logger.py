@@ -1,7 +1,3 @@
-"""
-Logging configuration: structured logging as JSON to stdout
-"""
-
 import json
 import sys
 import logging
