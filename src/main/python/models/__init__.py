@@ -1,7 +1,7 @@
-from src.models.decision import Decision
-from src.models.alert import Alert
-from src.models.allowlist import Allowlist
-from src.models.parser import (
+from models.decision import Decision
+from models.alert import Alert
+from models.allowlist import Allowlist
+from models.parser import (
     parseDecisions,
     parseAllowlists,
     parseAlerts,

@@ -6,9 +6,9 @@ import time
 from prometheus_client import start_http_server
 from prometheus_client.core import REGISTRY
 
-from src.config import Config
-from src.collector import CrowdSecCollector
-from src import logger as log_module
+from config import Config
+from collector import CrowdSecCollector
+from logger import getLogger, configure
 
 def main() -> None:
     # --- Load Configuration ---
@@ -20,8 +20,8 @@ def main() -> None:
         sys.exit(1)
 
     # --- Initialize and configure logger ---
-    log_module.configure(config.logLevel)
-    log = log_module.getLogger("main")
+    configure(config.logLevel)
+    log = getLogger("main")
 
     log.info(
         "startup",

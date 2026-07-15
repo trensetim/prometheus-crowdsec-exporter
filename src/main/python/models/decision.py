@@ -2,14 +2,14 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from src.models._base import (
+from models._base import (
     boolField,
     datetimeField,
     intField,
     requiredFieldsPresent,
     strField,
 )
-from src.logger import getLogger
+from logger import getLogger
 
 log = getLogger(__name__)
 

@@ -4,12 +4,12 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
-from src.models._base import (
+from models._base import (
     boolField,
     datetimeField,
     strField,
 )
-from src.logger import getLogger
+from logger import getLogger
 
 log = getLogger(__name__)
 

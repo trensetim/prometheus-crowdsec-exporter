@@ -7,10 +7,10 @@ from prometheus_client.registry import Collector
 
 import requests
 
-from src.config import Config
-from src.logger import getLogger
-import src.metrics as metrics
-from src.models import (
+from config import Config
+from logger import getLogger
+import metrics as metrics
+from models import (
     Alert,
     Decision,
     parseDecisions,

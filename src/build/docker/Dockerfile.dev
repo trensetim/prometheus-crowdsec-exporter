@@ -15,7 +15,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Install dependencies first (cached layer – only invalidated when requirements.txt changes)
-COPY requirements.txt .
+COPY src/main/python/requirements.txt .
 RUN --mount=type=secret,id=corporate_ca,target=/etc/ssl/certs/ca-certificates.crt \
     pip install --no-cache-dir -r requirements.txt
 
@@ -32,4 +32,4 @@ USER exporter
 
 EXPOSE 8000
 
-CMD ["python3", "-m", "src.main"]
+CMD ["python3", "src/main.py"]

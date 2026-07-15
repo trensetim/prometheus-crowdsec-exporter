@@ -1,9 +1,9 @@
 from typing import Any
 
-from src.models.decision import Decision
-from src.models.allowlist import Allowlist
-from src.models.alert import Alert
-from src.logger import getLogger
+from models.decision import Decision
+from models.allowlist import Allowlist
+from models.alert import Alert
+from logger import getLogger
 
 log = getLogger(__name__)
 
