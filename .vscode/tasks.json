@@ -10,8 +10,7 @@
             },
             "presentation": {
                 "revealProblems": "onProblem",
-                "reveal": "silent",
-                "close": true
+                "reveal": "silent"
             }
         },
         {
@@ -19,12 +18,11 @@
             "type": "shell",
             "command": "python3 -m venv --without-scm-ignore-files . ; source bin/activate ; pip install -r requirements.txt",
             "options": {
-                "cwd": "${workspaceFolder}/src/main/python",
+                "cwd": "${workspaceFolder}/src/main/python"
             },
             "presentation": {
                 "revealProblems": "onProblem",
-                "reveal": "silent",
-                "close": true
+                "reveal": "silent"
             }
         },
         {
