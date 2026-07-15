@@ -1,31 +1,45 @@
-# prometheus-crowdsec-exporter
+# Architecture
 
-A Prometheus exporter for [CrowdSec](https://www.crowdsec.net/) that polls the CrowdSec Local API (LAPI) and exposes decisions, alerts, and allowlists as Prometheus metrics for visualization in Grafana.
+Data flow:
 
----
+```mermaid
+flowchart LR
+    lapi["CrowdSec LAPI (:8080)"]
+    ex["Exporter Container"]
+    prom["Prometheus"]
+    gf["Grafana"]
+    stdout
 
-## Architecture
-
-```
-CrowdSec LAPI (:8080)
-       │
-       │  GET /v1/decisions
-       │  GET /v1/alerts
-       │  GET /v1/allowlists
-       │  (X-Api-Key: bouncer, read-only)
-       ▼
- [ Exporter Pod ]  ──►  /metrics (:8000)  ──►  Prometheus  ──►  Grafana
-       │
-       └─ stdout (structured JSON)  ──►  Loki  ──►  Grafana (logs panel)
+    lapi -- "Decisions/Alerts/Allowlists" --> ex
+    ex -- "Metrics"  --> prom
+    prom -- "Metrics Data" --> gf
+    ex -- structured JSON logs --> stdout
 ```
 
-The exporter is triggered by Prometheus scrapes (pull model) – it polls the LAPI on every `/metrics` request and yields fresh metrics each time.
+... and in direction of access:
 
----
+```mermaid
+flowchart RL
+    lapi["CrowdSec LAPI"]
+    ex["Exporter Container"]
+    prom["Prometheus"]
+    gf["Grafana"]
 
-## Metrics
+    ex -- "
+        HTTP GET /v1/decisions
+        HTTP GET /v1/alerts
+        HTTP GET /v1/allowlists
+        Header X-Api-Key
+    " --> lapi
+    prom -- "HTTP GET /metrics" --> ex
+    gf -- PromQL --> prom
+```
 
-### Decisions (`GET /v1/decisions`)
+
+The exporter polls the LAPI on every `/metrics` scrape request by Prometheus and yields fresh metrics each time.
+
+# Metrics
+## Decisions
 
 | Metric                                                     | Type    | Labels                                                                                                       | Description                                    |
 | ---------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
@@ -34,8 +48,7 @@ The exporter is triggered by Prometheus scrapes (pull model) – it polls the LA
 | `crowdsec_decisions_fetched_total`                         | Counter | –                                                                                                            | Total decisions fetched since exporter start   |
 | `crowdsec_last_successful_decision_poll_timestamp_seconds` | Gauge   | `endpoint`                                                                                                   | Unix timestamp of last successful poll         |
 
-### Alerts (`GET /v1/alerts`)
-
+## Alerts
 | Metric                                                   | Type    | Labels                                                                                                        | Description                                         |
 | -------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
 | `crowdsec_alerts`                                        | Gauge   | `scenario`, `simulated`, `remediation`                                                                        | Currently active alerts aggregated by scenario      |
@@ -43,8 +56,7 @@ The exporter is triggered by Prometheus scrapes (pull model) – it polls the LA
 | `crowdsec_alerts_fetched_total`                          | Counter | –                                                                                                             | Total alerts fetched since exporter start           |
 | `crowdsec_last_successful_alerts_poll_timestamp_seconds` | Gauge   | `endpoint`                                                                                                    | Unix timestamp of last successful poll              |
 
-### Allowlists (`GET /v1/allowlists`)
-
+## Allowlists
 | Metric                                                       | Type    | Labels                                                                   | Description                                        |
 | ------------------------------------------------------------ | ------- | ------------------------------------------------------------------------ | -------------------------------------------------- |
 | `crowdsec_allowlists_items`                                  | Gauge   | `name`, `allowlistId`, `consoleManaged`                                  | Number of active (non-expired) items per allowlist |
@@ -53,17 +65,13 @@ The exporter is triggered by Prometheus scrapes (pull model) – it polls the LA
 | `crowdsec_allowlists_fetched_total`                          | Counter | –                                                                        | Total allowlists fetched since exporter start      |
 | `crowdsec_last_successful_allowlists_poll_timestamp_seconds` | Gauge   | `endpoint`                                                               | Unix timestamp of last successful poll             |
 
-### Exporter health
-
+## Exporter health
 | Metric                       | Type    | Labels                   | Description               |
 | ---------------------------- | ------- | ------------------------ | ------------------------- |
 | `crowdsec_poll_errors_total` | Counter | `endpoint`, `error_type` | Failed LAPI poll attempts |
 | `crowdsec_exporter_info`     | Info    | `version`, `git_commit`  | Build metadata            |
 
----
-
-## Environment variables
-
+# Configuration (Environment variables)
 | Variable                | Required | Default   | Description                                                       |
 | ----------------------- | -------- | --------- | ----------------------------------------------------------------- |
 | `CROWDSEC_LAPI_URL`     | ✓        | –         | e.g. `http://crowdsec.crowdsec-monitoring.svc.cluster.local:8080` |
@@ -75,12 +83,8 @@ The exporter is triggered by Prometheus scrapes (pull model) – it polls the LA
 | `APP_VERSION`           |          | `unknown` | Injected via `--build-arg` at image build time                    |
 | `GIT_COMMIT`            |          | `unknown` | Injected via `--build-arg` at image build time                    |
 
----
-
-## Logging
-
-All log output is structured JSON to `stdout` – compatible with Kubernetes log collection and Loki.
-
+# Logging
+All log output is structured JSON to `stdout`. \
 Every log line contains at minimum:
 
 | Field       | Example                | Description                                              |
@@ -109,155 +113,3 @@ Sensitive fields (`apiKey`, `token`, `secret`, `password`) are automatically mas
 | `shutdownSignalReceived` | info  | SIGTERM or SIGINT received                            |
 | `shutdownComplete`       | info  | Clean exit                                            |
 
----
-
-## Build
-
-### Production image (distroless)
-
-```bash
-docker build \
-  --secret id=corporate_ca,src=/etc/ssl/certs/ca-certificates.crt \
-  --build-arg APP_VERSION=1.0.0 \
-  --build-arg GIT_COMMIT=$(git rev-parse --short HEAD) \
-  -t crowdsec-exporter:1.0.0 \
-  .
-```
-
-The production image uses `gcr.io/distroless/python3-debian12:nonroot`:
-- No shell, no package manager → minimal attack surface
-- Runs as uid 65532 (nonroot) → satisfies `runAsNonRoot: true`
-- Multi-stage build → only application code and locked dependencies in final image
-
-### Validate the build
-
-```bash
-# Config validation fires (expected: FATAL config error – no env vars set)
-docker run --rm crowdsec-exporter:1.0.0
-
-# No shell available (expected: error)
-docker run --rm crowdsec-exporter:1.0.0 sh
-
-# Check image size
-docker images crowdsec-exporter
-```
-
----
-
-## Local development
-
-The `dev/` directory contains a complete local stack with a mock CrowdSec LAPI, Prometheus, and Grafana.
-
-### Prerequisites
-
-- Docker with BuildKit enabled (`export DOCKER_BUILDKIT=1` or set in `/etc/docker/daemon.json`)
-- Corporate CA registered: `sudo cp your-ca.crt /usr/local/share/ca-certificates/ && sudo update-ca-certificates`
-
-### Start the dev stack
-
-```bash
-cd dev/
-docker compose up --build
-```
-
-| URL                                | Service                              |
-| ---------------------------------- | ------------------------------------ |
-| http://localhost:3000              | Grafana (`admin` / `dev-grafana-pw`) |
-| http://localhost:9090              | Prometheus                           |
-| http://localhost:8000/metrics      | Exporter metrics (direct)            |
-| http://localhost:8080/v1/decisions | Mock CrowdSec LAPI                   |
-
-### Iteration workflow
-
-```bash
-# Code changed (src/) → restart only, no rebuild needed
-docker compose restart exporter
-
-# requirements.txt changed → rebuild
-docker compose up --build exporter
-
-# View live logs
-docker compose logs -f exporter
-
-# Manual LAPI test
-curl -H "X-Api-Key: dev-bouncer-key-12345" http://localhost:8080/v1/decisions | jq .
-
-# Check metrics
-curl -s http://localhost:8000/metrics | grep crowdsec
-
-# Tear down and clean volumes
-docker compose down -v
-```
-
----
-
-## Security
-
-**Secrets:** The bouncer API key (`CROWDSEC_API_KEY`) is a read-only credential. In Kubernetes, inject it via an `ExternalSecret` (External Secrets Operator) referencing Vault or a similar secret store. Never put it in `values.yaml` or commit it to Git.
-
-**Container hardening (Kubernetes):**
-```yaml
-securityContext:
-  runAsNonRoot: true
-  readOnlyRootFilesystem: true
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop: ["ALL"]
-automountServiceAccountToken: false
-```
-
-**Network:** The exporter requires only two network paths:
-- Egress to CrowdSec LAPI on port 8080
-- Ingress from Prometheus on port 8000
-
-All other traffic should be denied via `NetworkPolicy`.
-
----
-
-## Dependency management
-
-Direct dependencies are listed in `src/main/python/requirements.in`. Locked, hashed versions are in `src/main/python/requirements.txt` (generated by `pip-compile`).
-
-```bash
-cd src/main/python/ ; pip-compile --generate-hashes requirements.in
-```
-
-### Dependencies
-
-| Package             | Purpose                   | Maintained by     |
-| ------------------- | ------------------------- | ----------------- |
-| `prometheus_client` | Metrics exposition        | Prometheus / CNCF |
-| `requests`          | CrowdSec LAPI HTTP client | Python community  |
-| `structlog`         | Structured JSON logging   | Hynek Schlawack   |
-
----
-
-## Project structure
-
-```
-.
-├── src/
-│   ├── main.py           # Entry point – startup, signal handling, HTTP server
-│   ├── config.py         # Configuration from environment variables
-│   ├── collector.py      # Prometheus Collector – polls LAPI, yields metrics
-│   ├── logger.py         # structlog JSON logging setup
-│   ├── metrics.py        # Prometheus MetricFamily definitions
-│   └── models/
-│       ├── _base.py      # Shared parse helpers (strField, boolField, …)
-│       ├── decision.py   # Decision dataclass + metricLabels/metricDetails
-│       ├── alert.py      # Alert, AlertSource, AlertEvent dataclasses
-│       ├── allowlist.py  # Allowlist, AllowlistItem dataclasses
-│       ├── parser.py     # parseDecisions / parseAlerts / parseAllowlists
-│       └── __init__.py   # Public re-exports
-├── dev/
-│   ├── docker-compose.yaml
-│   ├── .env              # Dev secrets (never commit)
-│   ├── mock-crowdsec/    # Stdlib Python mock LAPI server
-│   ├── prometheus/       # Minimal scrape config
-│   └── grafana/          # Auto-provisioned Prometheus datasource
-├── Dockerfile            # Production – distroless, multi-stage
-├── Dockerfile.dev        # Development – python:slim, volume-mounted source
-├── requirements.in       # Direct dependencies
-├── requirements.txt      # Locked + hashed (generated by pip-compile)
-└── .dockerignore
-```
