@@ -29,6 +29,9 @@ _EXPIRY_THRESHOLD_SECONDS = 86_400  # 24h
 
 class CrowdSecCollector(Collector):
 
+    _session: requests.Session
+
+    # parsed responses from the last poll
     _decisions: list[Decision] = []
     _allowlists: list[Allowlist] = []
     _alerts: list[Alert] = []
@@ -38,16 +41,12 @@ class CrowdSecCollector(Collector):
     _metric_last_poll_duration_seconds:float = 0
 
     def __init__(self, config: Config) -> None:
-        self._config = config
-        self._session = _buildSession(config.apiKey)
+        self._session = _open_session(config.apiKey, config.version)
         self._base_url = config.crowdSecLapiURL.rstrip("/")
         self._decisionsFetchedCounter = 0
         self._allowlistsFetchedCounter = 0
         self._alertsFetchedCounter = 0
-        log.info(
-            "collector_initialised",
-            lapi_url=self._base_url
-        )
+        log.info("collector_initialised", lapi_url=self._base_url)
 
     def collect(self) -> Iterable[Metric]:
         self.poll()
@@ -266,64 +265,38 @@ class CrowdSecCollector(Collector):
             )
         return aggregated
 
-    def _fetch(self, endpoint: str, path: str, params: dict | None = None) -> list | None:
-        url = f"{self._base_url}{path}"
-        log.debug(
-            "pollStart",
-            endpoint=endpoint
-        )
+    def _fetch(self, endpoint: str, path: str) -> list:
         try:
-            response = self._session.get(url, params = params, timeout = _HTTP_TIMEOUT)
+            response = self._session.get(f"{self._base_url}{path}", timeout = _HTTP_TIMEOUT)
 
-            if response.status_code == 204:
-                log.debug(
-                    "pollEmpty",
-                    endpoint=endpoint
-                )
+            if response.status_code == 204: # No Content
+                log.debug("pollEmpty", endpoint = endpoint)
                 return []
 
             response.raise_for_status()
             data = response.json()
 
             if not isinstance(data, list):
-                raise ValueError(
-                    f"Expected list from {path}, got {type(data).__name__}"
-                )
-            return data
+                raise ValueError(f"Expected list from {path}, got {type(data).__name__}")
 
+            return data
         except requests.exceptions.ConnectionError as exc:
-            log.error(
-                "pollFailed",
-                endpoint = endpoint,
-                error_type = "connectionError",
-                detail = str(exc)
-            )
+            log.warning("pollFailed", endpoint = endpoint, error_type = "connect", detail = str(exc))
             raise
         except requests.exceptions.HTTPError as exc:
             status = exc.response.status_code if exc.response is not None else "unknown"
-            log.error(
-                "pollFailed",
-                endpoint = endpoint,
-                error_type="httpError",
-                http_status=status,
-                detail=str(exc)
-            )
+            log.warning("pollFailed", endpoint = endpoint, error_type = "http", http_status = status, detail = str(exc))
             raise
         except (ValueError, KeyError) as exc:
-            log.error(
-                "pollFailed",
-                endpoint = endpoint,
-                error_type = "parseError",
-                detail = str(exc)
-            )
+            log.warning("pollFailed", endpoint = endpoint, error_type = "parse", detail = str(exc))
             raise
 
-def _buildSession(api_key: str) -> requests.Session:
+def _open_session(api_key: str, version: str) -> requests.Session:
+    """Creates an http session object with adequate headers for polling the CrowdSec LAPI."""
     session = requests.Session()
     session.headers.update({
         "X-Api-Key": api_key,
         "Accept": "application/json",
-        "User-Agent": "prometheus-crowdsec-exporter",
+        "User-Agent": f"prometheus-crowdsec-exporter/{version}",
     })
     return session
-
