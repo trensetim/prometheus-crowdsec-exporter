@@ -16,8 +16,7 @@ WORKDIR /app
 
 # Install dependencies first (cached layer – only invalidated when requirements.txt changes)
 COPY src/main/python/requirements.txt .
-RUN --mount=type=secret,id=corporate_ca,target=/etc/ssl/certs/ca-certificates.crt \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Source is NOT copied here – it is volume-mounted by compose.yaml.
 # This means: edit code → docker compose restart exporter → changes are live.

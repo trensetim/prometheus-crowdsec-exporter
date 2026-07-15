@@ -2,8 +2,7 @@ FROM python:3.12-slim AS builder
 
 WORKDIR /build
 
-RUN --mount=type=secret,id=corporate_ca,target=/etc/ssl/certs/ca-certificates.crt \
-    --mount=type=bind,source=src/main/python/requirements.txt,target=requirements.txt \
+RUN --mount=type=bind,source=src/main/python/requirements.txt,target=requirements.txt \
     pip install --no-cache-dir --target=/deps -r requirements.txt
 
 FROM gcr.io/distroless/python3-debian12:nonroot

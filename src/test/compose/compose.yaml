@@ -20,9 +20,6 @@ networks:
 volumes:
   prometheus-data:
   grafana-data:
-secrets:
-  corporate_ca:
-    file: /etc/ssl/certs/ca-certificates.crt
 
 services:
   # --------------------------------------------------------------------------
@@ -65,8 +62,6 @@ services:
     build:
       context: ../../.. # project root
       dockerfile: src/test/compose/Dockerfile
-      secrets:
-        - corporate_ca
     env_file:
       - lapi-key.env
       - exporter.env

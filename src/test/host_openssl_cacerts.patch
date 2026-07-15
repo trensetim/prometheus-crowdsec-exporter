@@ -1,0 +1,51 @@
+diff --git a/src/build/docker/Dockerfile b/src/build/docker/Dockerfile
+index 73be170..2af0104 100644
+--- a/src/build/docker/Dockerfile
++++ b/src/build/docker/Dockerfile
+@@ -2,7 +2,8 @@ FROM python:3.12-slim AS builder
+
+ WORKDIR /build
+
+-RUN --mount=type=bind,source=src/main/python/requirements.txt,target=requirements.txt \
++RUN --mount=type=secret,id=host_openssl_cacerts,target=/etc/ssl/certs/ca-certificates.crt \
++    --mount=type=bind,source=src/main/python/requirements.txt,target=requirements.txt \
+     pip install --no-cache-dir --target=/deps -r requirements.txt
+
+ FROM gcr.io/distroless/python3-debian12:nonroot
+diff --git a/src/test/compose/Dockerfile b/src/test/compose/Dockerfile
+index f7af21d..67f0e21 100644
+--- a/src/test/compose/Dockerfile
++++ b/src/test/compose/Dockerfile
+@@ -16,7 +16,8 @@ WORKDIR /app
+
+ # Install dependencies first (cached layer – only invalidated when requirements.txt changes)
+ COPY src/main/python/requirements.txt .
+-RUN pip install --no-cache-dir -r requirements.txt
++RUN --mount=type=secret,id=host_openssl_cacerts,target=/etc/ssl/certs/ca-certificates.crt \
++    pip install --no-cache-dir -r requirements.txt
+
+ # Source is NOT copied here – it is volume-mounted by compose.yaml.
+ # This means: edit code → docker compose restart exporter → changes are live.
+diff --git a/src/test/compose/compose.yaml b/src/test/compose/compose.yaml
+index 44061cc..fb157ea 100644
+--- a/src/test/compose/compose.yaml
++++ b/src/test/compose/compose.yaml
+@@ -20,6 +20,9 @@ networks:
+ volumes:
+   prometheus-data:
+   grafana-data:
++secrets:
++  host_openssl_cacerts:
++    file: /etc/ssl/certs/ca-certificates.crt
+
+ services:
+   # --------------------------------------------------------------------------
+@@ -62,6 +65,8 @@ services:
+     build:
+       context: ../../.. # project root
+       dockerfile: src/test/compose/Dockerfile
++      secrets:
++        - host_openssl_cacerts
+     env_file:
+       - lapi-key.env
+       - exporter.env
