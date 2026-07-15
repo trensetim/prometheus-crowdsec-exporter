@@ -51,7 +51,7 @@ def _run_forever(log: logging.Logger):
         stop_event.wait(0.5)
 
 if __name__ == "__main__":
-    CONFIG = Config.readConfigFromEnv()
+    CONFIG = Config()
     LOGGER = _init_logging()
     _log_startup_info()
 
