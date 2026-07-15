@@ -51,8 +51,9 @@ services:
     volumes:
       - ../python/mock_lapi.py:/app/mock_lapi.py:ro
     environment:
-      DEV_API_KEY: ${CROWDSEC_API_KEY}
       PORT: "8080"
+    env_file:
+      - lapi-key.env
     ports:
       - "127.0.0.1:8080:8080"   # expose for manual curl; not needed by exporter
     networks: [dev]
@@ -75,7 +76,9 @@ services:
       dockerfile: src/test/compose/Dockerfile
       secrets:
         - corporate_ca
-    env_file: .env
+    env_file:
+      - lapi-key.env
+      - exporter.env
     volumes:
       - ../../main/python:/app/src:ro   # mount source read-only → restart to pick up changes
     ports:
@@ -125,9 +128,9 @@ services:
   grafana:
     image: grafana/grafana:10.4.2
     environment:
-      GF_SECURITY_ADMIN_USER:     ${GF_SECURITY_ADMIN_USER}
-      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
-      GF_USERS_ALLOW_SIGN_UP:     "false"
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: dev-grafana-pw
+      GF_USERS_ALLOW_SIGN_UP: "false"
       GF_ANALYTICS_REPORTING_ENABLED: "false"
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
       GF_INSTALL_PLUGINS:         ""       # no plugins in dev

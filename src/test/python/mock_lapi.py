@@ -6,7 +6,7 @@ Implements the three endpoints used by the exporter:
   GET /v1/alerts
   GET /v1/allowlists
 
-Auth: validates X-Api-Key header against DEV_API_KEY env var.
+Auth: validates X-Api-Key header against CROWDSEC_API_KEY env var.
 /health is unauthenticated - used by Docker healthcheck.
 """
 
@@ -16,7 +16,7 @@ import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 
-API_KEY = os.getenv("DEV_API_KEY", "dev-bouncer-key-12345")
+API_KEY = os.getenv("CROWDSEC_API_KEY", "dev-bouncer-key-12345")
 PORT    = int(os.getenv("PORT", "8080"))
 
 
