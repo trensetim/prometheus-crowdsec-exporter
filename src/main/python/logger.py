@@ -1,3 +1,7 @@
+"""
+Logging configuration: structured logging as JSON to stdout
+"""
+
 import json
 import sys
 import logging
@@ -6,6 +10,7 @@ from collections import OrderedDict
 import structlog
 
 def configure(log_level: str) -> None:
+    """Configures the global logging. Must be called once on application boot."""
 
     level = getattr(logging, log_level, logging.INFO)
 
@@ -30,11 +35,12 @@ def configure(log_level: str) -> None:
         ],
         wrapper_class=structlog.stdlib.BoundLogger,
         context_class=OrderedDict,
-        logger_factory=structlog.stdlib.LoggerFactory(),
+        logger_factory=structlog.stdlib.LoggerFactory(), # instantiates a logging.Logger
         cache_logger_on_first_use=False
     )
 
-def getLogger(name: str) -> str:
+def getLogger(name: str) -> logging.Logger: # type hint: see structlog.stdlib.LoggerFactory
+    """Return a logger instance"""
     return structlog.get_logger(name)
 
 def _serialize_json(obj: object, *args, **kwargs) -> str:
