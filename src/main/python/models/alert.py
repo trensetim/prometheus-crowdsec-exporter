@@ -10,9 +10,6 @@ from models._base import (
     strField,
 )
 from models.decision import Decision
-from logger import get_logger
-
-log = get_logger(__name__)
 
 @dataclass(frozen = True)
 class AlertSource:
@@ -95,27 +92,18 @@ class Alert:
     kind: str
 
     @classmethod
-    def mapClassFromApiDict(cls, raw: dict[str, Any], index: int = 0) -> "Alert | None":
+    def parse(cls, raw: dict[str, Any]) -> "Alert | None":
         if not isinstance(raw, dict):
-            log.warning(
-                "alertParseError",
-                reason = "notADict",
-                got = type(raw).__name__,
-                index = index
-            )
-            return None
+            raise ValueError("Alert is not a dict")
 
 
         rawEvents = raw.get("events") or []
-        events = tuple(
-            item for re in rawEvents
-            if (item := AlertEvent.mapClassFromApiDict(re)) is not None
-        )
+        events = tuple(AlertEvent.mapClassFromApiDict(re) for re in rawEvents)
 
         rawDecisions = raw.get("decisions") or []
         decisions = tuple(
             item for rd in rawDecisions
-            if (item := Decision.mapClassFromApiDict(rd)) is not None
+            if (item := Decision.parse(rd)) is not None
         )
 
         return cls(

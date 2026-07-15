@@ -29,5 +29,5 @@ def datetimeField(raw: dict[str, Any], key: str) -> datetime | None:
     except ValueError:
         return None
 
-def requiredFieldsPresent(raw: dict[str, Any], fields: tuple[str, ...]) -> list[str]:
-    return [f for f in fields if not raw.get(f)]
+def requiredFieldsPresent(raw: dict[str, Any], fields: set[str]) -> list[str]:
+    return [f for f in fields if f not in raw]

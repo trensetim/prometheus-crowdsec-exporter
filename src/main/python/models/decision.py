@@ -9,11 +9,6 @@ from models._base import (
     requiredFieldsPresent,
     strField,
 )
-from logger import get_logger
-
-log = get_logger(__name__)
-
-_REQUIRED = ("type", "origin", "scenario", "scope")
 
 @dataclass(frozen=True)
 class Decision:
@@ -29,26 +24,13 @@ class Decision:
     simulated: bool
 
     @classmethod
-    def mapClassFromApiDict(cls, raw: dict[str, Any], index: int = 0) -> "Decision | None":
+    def parse(cls, raw: dict[str, Any]) -> "Decision | None":
         if not isinstance(raw, dict):
-            log.warning(
-                "decisionParseError",
-                reason = "notADict",
-                got = type(raw).__name__,
-                index = index
-            )
-            return None
+            raise ValueError("Decision is not a dict")
 
-        missing = requiredFieldsPresent(raw, _REQUIRED)
+        missing = requiredFieldsPresent(raw, ["type", "origin", "scenario", "scope"])
         if missing:
-            log.warning(
-                "decisionParseError",
-                reason = "missingRequiredFields",
-                missing = missing,
-                index = index,
-                raw_keys = list(raw.keys())
-            )
-            return None
+            raise ValueError(f"Decision is missing required fields: {missing}")
 
         return cls(
             decisionType = strField(raw, "type"),

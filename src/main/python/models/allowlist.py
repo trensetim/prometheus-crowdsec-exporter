@@ -1,5 +1,4 @@
 
-from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
@@ -9,9 +8,6 @@ from models._base import (
     datetimeField,
     strField,
 )
-from logger import get_logger
-
-log = get_logger(__name__)
 
 @dataclass(frozen = True)
 class AllowlistItem:
@@ -21,16 +17,12 @@ class AllowlistItem:
     expiration: datetime | None
 
     @classmethod
-    def mapClassFromApiDict(cls, raw: dict[str, Any], index: int = 0) -> "AllowlistItem | None":
+    def parse(cls, raw: dict[str, Any]) -> "AllowlistItem": # pylint: disable=missing-function-docstring
         if not isinstance(raw, dict):
-            return None
+            raise ValueError("AllowlistItem is not a dict")
 
         if not raw.get("value"):
-            log.warning(
-                "allowlistItemParseError",
-                reason = "missingValue",
-            )
-            return None
+            raise ValueError("AllowlistItem is missing value")
 
         return cls(
             value = strField(raw, "value"),
@@ -64,28 +56,17 @@ class Allowlist:
     consoleManaged: bool
 
     @classmethod
-    def mapClassFromApiDict(cls, raw: dict[str, Any], index: int = 0) -> "Allowlist | None":
+    def parse(cls, raw: dict[str, Any]) -> "Allowlist | None": # pylint: disable=missing-function-docstring
         if not isinstance(raw, dict):
-            log.warning(
-                "allowlistParseError",
-                reason = "notADict",
-                got = type(raw).__name__,
-                index = index
-            )
-            return None
+            raise ValueError("Allowlist is not a dict")
 
         if not raw.get("name"):
-            log.warning(
-                "allowlistParseError",
-                reason="missingName",
-                index=index
-            )
-            return None
+            raise ValueError("Allowlist is missing name")
 
         rawItems = raw.get("items") or []
         items = tuple(
             item for rd in rawItems
-            if (item := AllowlistItem.mapClassFromApiDict(rd)) is not None
+            if (item := AllowlistItem.parse(rd)) is not None
         )
 
         return cls(

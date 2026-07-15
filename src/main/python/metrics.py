@@ -108,13 +108,6 @@ def createLastSuccessfulAllowlistsPollTimestamp() -> CounterMetricFamily:
         labels=["endpoint"],
     )
 
-def createAllowlistsPollErrorsTotal() -> CounterMetricFamily:
-    return CounterMetricFamily(
-        "crowdsec_poll_errors_total",
-        "Total failed LAPI poll attempts",
-        labels=["endpoint", "errorType"],
-    )
-
 # --- Exporter infos ---
 def createExporterInfo() -> InfoMetricFamily:
     return InfoMetricFamily(
@@ -123,9 +116,26 @@ def createExporterInfo() -> InfoMetricFamily:
         "Use in dashboard title: 'Version: {{ crowdsec_exporter_info }}'",
     )
 
-def createPollErrorsTotal() -> InfoMetricFamily:
-    return CounterMetricFamily(
+def polls_total(current_total: int) -> CounterMetricFamily:
+    c = CounterMetricFamily(
+        "crowdsec_polls_total",
+        "Total attempted LAPI polls (successes + failures) since exporter start.",
+    )
+    c.add_metric([], current_total)
+    return c
+
+def poll_errors_total(current_total: int) -> CounterMetricFamily:
+    c = CounterMetricFamily(
         "crowdsec_poll_errors_total",
         "Total failed LAPI poll attempts",
-        labels=["endpoint", "error_type"]
     )
+    c.add_metric([], current_total)
+    return c
+
+def last_poll_duration_seconds(value: float) -> GaugeMetricFamily:
+    g = GaugeMetricFamily(
+        "crowdsec_last_poll_duration_seconds",
+        "Duration of the last LAPI poll in seconds (covering all endpoints)",
+    )
+    g.add_metric([], value)
+    return g

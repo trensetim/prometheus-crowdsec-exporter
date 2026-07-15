@@ -7,31 +7,11 @@ from logger import get_logger
 
 log = get_logger(__name__)
 
-def parseDecisions(raw_list: list[Any],) -> tuple[list[Decision], int]:
-    return _parseList(raw_list, Decision.mapClassFromApiDict, "decisions")
+def parse_decisions(raw_list: list[Any]) -> list[Decision]:
+    return [Decision.parse(i) for i in raw_list]
 
-def parseAllowlists(raw_list: list[Any],) -> tuple[list[Allowlist], int]:
-    return _parseList(raw_list, Allowlist.mapClassFromApiDict, "allowlists")
+def parse_allowlists(raw_list: list[Any]) -> list[Allowlist]:
+    return [Allowlist.parse(i) for i in raw_list]
 
-def parseAlerts(raw_list: list[Any],) -> tuple[list[Alert], int]:
-    return _parseList(raw_list, Alert.mapClassFromApiDict, "alerts")
-
-def _parseList(raw_list, factory, kind: str):
-    results = []
-    skipped = 0
-    for i, raw in enumerate(raw_list):
-        obj = factory(raw, index=i)
-        if obj is not None:
-            results.append(obj)
-        else:
-            skipped += 1
-
-    if skipped:
-        log.warning(
-            "parsePartialResult",
-            kind = kind,
-            total = len(raw_list),
-            parsed = len(results),
-            skipped = skipped,
-        )
-    return results, skipped
+def parse_alerts(raw_list: list[Any]) -> list[Alert]:
+    return [Alert.parse(i) for i in raw_list]
