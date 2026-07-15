@@ -74,7 +74,7 @@ The build process in CI must stay clean.
 
 ```bash
 # in bash
-docker build --secret id=host_openssl_cacerts,src=/etc/ssl/certs/ca-certificates
+docker build --secret id=host_openssl_cacerts,src=/etc/ssl/certs/ca-certificates.crt
 ```
 
 ```Dockerfile
