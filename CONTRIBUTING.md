@@ -18,6 +18,8 @@ python -m build
 pip install .
 ```
 
+To debug the code, use VSCode and start launch "run" launch-configuration: It kicks off the compose stack and then launches a python debugger for the main code.
+
 ## Start the dev stack
 ```bash
 cd src/test/compose
@@ -28,31 +30,22 @@ docker compose up --build
 | ---------------------------------- | ------------------------------------ |
 | http://localhost:3000              | Grafana (`admin` / `dev-grafana-pw`) |
 | http://localhost:9090              | Prometheus                           |
-| http://localhost:8000/metrics      | Exporter metrics (direct)            |
 | http://localhost:8080/v1/decisions | Mock CrowdSec LAPI                   |
 
-## Development workflow
+## Development hints
 ```bash
-# ... Always first cd here
-cd src/test/compose
-
-# Code changed (src/) → restart only, no rebuild needed
-docker compose restart exporter
-
-# requirements.txt changed → rebuild
-docker compose up --build exporter
-
-# View live logs
-docker compose logs -f exporter
-
 # Manual LAPI test
 curl -H "X-Api-Key: dev-bouncer-key-12345" http://localhost:8080/v1/decisions | jq .
 
 # Check metrics
 curl -s http://localhost:8000/metrics | grep crowdsec
 
-# Tear down and clean volumes
-docker compose down -v
+# Work with the compose stack
+(
+    cd src/test/compose
+    docker compose down -v
+    docker compose up -d --force-recreate
+)
 ```
 
 # Build

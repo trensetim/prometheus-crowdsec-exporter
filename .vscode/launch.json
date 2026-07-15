@@ -1,0 +1,24 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "run",
+			"type": "debugpy",
+			"request": "launch",
+			"program": "main.py",
+			"console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/src/main/python/crowdsec",
+			"env": {
+                "CROWDSEC_LAPI_URL": "http://localhost:8080",
+                "METRICS_PORT": "8000",
+                "POLL_INTERVAL_SECONDS": "15",
+                "LOG_LEVEL": "DEBUG",
+                "APP_VERSION": "dev",
+                "GIT_COMMIT": "local"
+
+            },
+            "envFile": "${workspaceFolder}/src/test/compose/lapi-key.env",
+            "preLaunchTask": "start-compose"
+		}
+	]
+}

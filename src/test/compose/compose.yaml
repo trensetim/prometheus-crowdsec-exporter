@@ -2,14 +2,12 @@
 #
 # Services:
 #   mock-crowdsec   tiny Python stdlib HTTP server faking the CrowdSec LAPI
-#   exporter        your Python code, volume-mounted for instant hot-reload
 #   prometheus      time-series DB, scrapes exporter every 15s
 #   grafana         dashboard UI, datasource pre-configured
 #
 # Ports (all localhost only):
 #   http://localhost:3000  → Grafana  (admin / dev-grafana-pw)
 #   http://localhost:9090  → Prometheus
-#   http://localhost:8000  → Exporter /metrics  (direct, useful for curl)
 #   http://localhost:8080  → Mock CrowdSec LAPI (useful for manual curl tests)
 
 name: crowdsec-exporter-dev
@@ -22,11 +20,9 @@ volumes:
   grafana-data:
 
 services:
-  # --------------------------------------------------------------------------
   # Mock CrowdSec LAPI
   # Replaces the real CrowdSec agent (~300 MB) with a tiny stdlib HTTP server.
   # Returns rotating fake decisions/alerts/allowlists so the dashboard moves.
-  # --------------------------------------------------------------------------
   mock-crowdsec:
     image: python:3.12-slim
     command: python3 /app/mock_lapi.py
@@ -53,70 +49,22 @@ services:
       start_period: 5s
     restart: unless-stopped
 
-  # --------------------------------------------------------------------------
-  # CrowdSec Prometheus Exporter  (your code)
-  # Built from Dockerfile.dev in the project root (one level up from dev/).
-  # Source is volume-mounted → edit code, restart container, see changes.
-  # --------------------------------------------------------------------------
-  exporter:
-    build:
-      context: ../../.. # project root
-      dockerfile: src/test/compose/Dockerfile
-    env_file:
-      - lapi-key.env
-      - exporter.env
-    volumes:
-      - ../../main/python:/app/src:ro # mount source read-only → restart to pick up changes
-    ports:
-      - "127.0.0.1:8000:8000"
-    networks: [dev]
-    depends_on:
-      mock-crowdsec:
-        condition: service_healthy
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "python3",
-          "-c",
-          "import urllib.request; urllib.request.urlopen('http://localhost:8000/metrics')",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    restart: unless-stopped
-
-  # --------------------------------------------------------------------------
-  # Prometheus
-  # --storage.tsdb.retention.time=2h  keeps disk usage near zero in dev
-  # --storage.tsdb.wal-compression    saves another ~40% RAM/disk
-  # --------------------------------------------------------------------------
   prometheus:
     image: prom/prometheus:v2.52.0
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention.time=2h"
-      - "--storage.tsdb.wal-compression"
-      - "--web.enable-lifecycle" # allows POST /-/reload without restart
-      - "--log.level=info" # suppress scrape noise in dev logs
+      - "--log.level=info"
     volumes:
       - ./prometheus-config.yaml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     ports:
       - "127.0.0.1:9090:9090"
     networks: [dev]
-    depends_on:
-      exporter:
-        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
-  # --------------------------------------------------------------------------
-  # Grafana
-  # Datasource auto-provisioned → no manual setup after first start.
-  # GF_USERS_ALLOW_SIGN_UP=false and no plugins → minimal footprint.
-  # --------------------------------------------------------------------------
   grafana:
     image: grafana/grafana:10.4.2
     environment:
