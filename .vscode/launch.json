@@ -7,7 +7,7 @@
 			"request": "launch",
 			"program": "main.py",
 			"console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/src/main/python/crowdsec",
+            "cwd": "${workspaceFolder}/src/main/python",
 			"env": {
                 "CROWDSEC_LAPI_URL": "http://localhost:8080",
                 "METRICS_PORT": "8000",
@@ -15,10 +15,9 @@
                 "LOG_LEVEL": "DEBUG",
                 "APP_VERSION": "dev",
                 "GIT_COMMIT": "local"
-
             },
             "envFile": "${workspaceFolder}/src/test/compose/lapi-key.env",
-            "preLaunchTask": "start-compose"
+            "preLaunchTask": "prepare-all"
 		}
 	]
 }

@@ -3,17 +3,37 @@
     "tasks": [
         {
             "label": "start-compose",
+            "type": "shell",
             "command": "docker compose up -d --build",
             "options": {
                 "cwd": "${workspaceFolder}/src/test/compose"
             },
-            "type": "shell",
-            "args": [],
-            "problemMatcher": [],
             "presentation": {
-                "reveal": "always"
+                "revealProblems": "onProblem",
+                "reveal": "silent",
+                "close": true
+            }
+        },
+        {
+            "label": "init-venv",
+            "type": "shell",
+            "command": "python3 -m venv --without-scm-ignore-files . ; source bin/activate ; pip install -r requirements.txt",
+            "options": {
+                "cwd": "${workspaceFolder}/src/main/python",
             },
-            "group": "build"
+            "presentation": {
+                "revealProblems": "onProblem",
+                "reveal": "silent",
+                "close": true
+            }
+        },
+        {
+            "label": "prepare-all",
+            "dependsOn": [
+                "init-venv",
+                "start-compose"
+            ],
+            "dependsOrder": "parallel"
         }
     ]
 }

@@ -1,13 +1,10 @@
 # Python cache
-__pycache__/
-*.py[cod]
-*.pyo
-.pytest_cache/
+**/__pycache__/
+**/*.py[cod]
+**/*.pyo
+**/.pytest_cache/
 
 # Build artifacts
-*.egg-info/
-dist/
-build/
-
-# requirements source (only the locked .txt is needed in the image)
-requirements.in
+**/*.egg-info/
+**/dist/
+**/build/

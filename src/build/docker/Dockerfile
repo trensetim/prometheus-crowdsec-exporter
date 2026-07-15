@@ -1,27 +1,22 @@
-FROM python:3.12-slim AS builder
-
-WORKDIR /build
-
-RUN --mount=type=bind,source=src/main/python/requirements.txt,target=requirements.txt \
-    pip install --no-cache-dir --target=/deps -r requirements.txt
-
-FROM gcr.io/distroless/python3-debian12:nonroot
-
 ARG APP_VERSION=unknown
 ARG GIT_COMMIT=unknown
-ENV APP_VERSION=${APP_VERSION} \
-    GIT_COMMIT=${GIT_COMMIT} \
-    PYTHONPATH=/deps \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
 
-COPY --from=builder /deps /deps
-COPY src/main/python /app/src/
+FROM python:3.14-trixie
+
+ARG APP_VERSION
+ARG GIT_COMMIT
+ENV APP_VERSION=${APP_VERSION} \
+    GIT_COMMIT=${GIT_COMMIT}
+
+RUN --mount=type=secret,id=host_openssl_cacerts,target=/etc/ssl/certs/ca-certificates.crt \
+    --mount=type=bind,source=src/main/python/requirements.txt,target=requirements.txt \
+    pip install --no-cache -r requirements.txt
 
 WORKDIR /app
+COPY --chown=nobody:nobody src/main/python/ /app
 
-USER nonroot
-
+ENV PYTHONUNBUFFERED="1"
 EXPOSE 8000
+USER nobody
 
-ENTRYPOINT ["python3", "-m", "src.main"]
+ENTRYPOINT ["python3", "/app/main.py"]
