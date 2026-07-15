@@ -3,9 +3,9 @@ from typing import Any
 from models.decision import Decision
 from models.allowlist import Allowlist
 from models.alert import Alert
-from logger import getLogger
+from logger import get_logger
 
-log = getLogger(__name__)
+log = get_logger(__name__)
 
 def parseDecisions(raw_list: list[Any],) -> tuple[list[Decision], int]:
     return _parseList(raw_list, Decision.mapClassFromApiDict, "decisions")

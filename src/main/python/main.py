@@ -25,7 +25,7 @@ def _log_startup_info():
 
 def _init_logging() -> logging.Logger:
     logger.configure(CONFIG.logLevel)
-    return logger.getLogger("main")
+    return logger.get_logger("main")
 
 def _start_metrics_server() -> Tuple[WSGIServer, threading.Thread]:
     REGISTRY.register(CrowdSecCollector(CONFIG))

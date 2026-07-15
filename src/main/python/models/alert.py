@@ -10,9 +10,9 @@ from models._base import (
     strField,
 )
 from models.decision import Decision
-from logger import getLogger
+from logger import get_logger
 
-log = getLogger(__name__)
+log = get_logger(__name__)
 
 @dataclass(frozen = True)
 class AlertSource:

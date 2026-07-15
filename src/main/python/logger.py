@@ -35,7 +35,7 @@ def configure(log_level: str) -> None:
         cache_logger_on_first_use=False
     )
 
-def getLogger(name: str) -> logging.Logger: # type hint: see structlog.stdlib.LoggerFactory
+def get_logger(name: str) -> logging.Logger: # type hint: see structlog.stdlib.LoggerFactory
     """Return a logger instance"""
     return structlog.get_logger(name)
 

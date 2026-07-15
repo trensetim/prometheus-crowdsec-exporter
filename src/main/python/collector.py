@@ -8,7 +8,7 @@ from prometheus_client.registry import Collector
 import requests
 
 from config import Config
-from logger import getLogger
+from logger import get_logger
 import metrics
 from models import (
     Alert,
@@ -18,7 +18,7 @@ from models import (
     parseAlerts
 )
 
-log = getLogger(__name__)
+log = get_logger(__name__)
 
 _DECISIONS_PATH  = "/v1/decisions"
 _ALERTS_PATH     = "/v1/alerts"
