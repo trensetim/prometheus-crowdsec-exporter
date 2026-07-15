@@ -1,0 +1,41 @@
+services:
+  - name: docker:dind
+
+before_script:
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+.gitlab-ci-common-snippets:
+  - &configure-python-setuptools-version |
+    VERSION=${CI_COMMIT_TAG:-0.0.0}
+    echo "$VERSION" > src/main/python/version.txt
+
+stages:
+  - build_dev
+  - release
+
+build_dev_docker:
+    tags:
+      - docker
+    stage: build_dev
+    script:
+      - *configure-python-setuptools-version
+
+      - docker build -t $CI_REGISTRY/$CI_PROJECT_PATH:dev -f src/build/docker/Dockerfile .
+      - docker push $CI_REGISTRY/$CI_PROJECT_PATH:dev
+
+release_docker:
+    tags:
+      - docker
+    stage: release
+    rules:
+    - if: $CI_COMMIT_TAG =~ /release\/docker\/.+/
+    script:
+      - CI_COMMIT_TAG=${CI_COMMIT_TAG#release/docker/}
+
+      - *configure-python-setuptools-version
+
+      - docker build -t $CI_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_TAG -f src/build/docker/Dockerfile .
+      - docker push $CI_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_TAG
+
+      - docker tag $CI_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_TAG $CI_REGISTRY/$CI_PROJECT_PATH:latest
+      - docker push $CI_REGISTRY/$CI_PROJECT_PATH:latest
