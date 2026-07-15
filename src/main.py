@@ -11,16 +11,15 @@ from src.collector import CrowdSecCollector
 from src import logger as log_module
 
 def main() -> None:
-    """ Load Configuration """
+    # --- Load Configuration ---
     try:
         config = Config.readConfigFromEnv()
     except EnvironmentError as exc:
-        # f is a string prefix in python used to embed variables direct into the string
         # log to sys.stderr cause logger is not initialized yet -> we need log-level from env to initialize the logger
         print(f"FATAL config error: {exc}", file=sys.stderr, flush=True)
         sys.exit(1)
 
-    """ Initialize and configure logger """
+    # --- Initialize and configure logger ---
     log_module.configure(config.logLevel)
     log = log_module.getLogger("main")
 
@@ -34,10 +33,10 @@ def main() -> None:
         crowdSecLapiURL = config.crowdSecLapiURL,
     )
 
-    """ Register custom collector for prometheus_client """
+    # --- Register custom collector for prometheus_client ---
     REGISTRY.register(CrowdSecCollector(config))
 
-    """ Start Prometheus/metrics HTTP server """
+    # --- Start Prometheus/metrics HTTP server ---
     try:
         start_http_server(port = config.metricsPort, addr = config.metricsHost)
     except OSError as exc:
@@ -53,7 +52,7 @@ def main() -> None:
         port = config.metricsPort
     )
 
-    """ Set up graceful shutdown via SIGTERM / SIGINT """
+    # --- Set up graceful shutdown via SIGTERM / SIGINT ---
     stopEvent = threading.Event()
 
     def _handleSignal(signum: int, _frame: object) -> None:
@@ -67,7 +66,7 @@ def main() -> None:
     signal.signal(signal.SIGTERM, _handleSignal)
     signal.signal(signal.SIGINT, _handleSignal)
 
-    """ Polling loop """
+    # --- Polling loop ---
     log.info("pollingLoopStarted")
     while not stopEvent.is_set():
         _interruptibleSleep(config.pollingIntervalInSeconds, stopEvent)

@@ -3,7 +3,6 @@ import time
 from typing import Iterable
 
 from prometheus_client import Metric
-from prometheus_client.metrics_core import CounterMetricFamily
 from prometheus_client.registry import Collector
 
 import requests

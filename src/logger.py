@@ -47,9 +47,6 @@ def configure(log_level: str) -> None:
 def getLogger(name: str) -> str:
     return structlog.get_logger(name)
 
-# underline befor function name is weak private in python
-# @see https://peps.python.org/pep-0008/
-#
 # custom processor - arguments are required by structlog
 def _maskSensitiveFields(
     logger: Logger,

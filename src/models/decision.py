@@ -13,7 +13,6 @@ from src.logger import getLogger
 
 log = getLogger(__name__)
 
-# Fields that must be present for a decision to be processable
 _REQUIRED = ("type", "origin", "scenario", "scope")
 
 @dataclass(frozen=True)

@@ -1,6 +1,6 @@
 from prometheus_client.metrics_core import GaugeMetricFamily, CounterMetricFamily, InfoMetricFamily
 
-""" Descions """
+# --- Descions ---
 def createActiveDecisions() -> GaugeMetricFamily :
     return GaugeMetricFamily(
         "crowdsec_decisions",
@@ -36,7 +36,7 @@ def createDecisionPollErrorsTotal() -> CounterMetricFamily:
         labels=["endpoint", "error_type"],
     )
 
-""" Alerts """
+# --- Alerts ---
 def createActiveAlerts() -> GaugeMetricFamily :
     return GaugeMetricFamily(
         "crowdsec_alerts",
@@ -72,7 +72,7 @@ def createAlertsPollErrorsTotal() -> CounterMetricFamily:
         labels=["endpoint", "errorType"],
     )
 
-""" Allowlists """
+# --- Allowlists ---
 def createActiveAllowlists() -> GaugeMetricFamily :
     return GaugeMetricFamily(
         "crowdsec_allowlists_items",
@@ -115,7 +115,7 @@ def createAllowlistsPollErrorsTotal() -> CounterMetricFamily:
         labels=["endpoint", "errorType"],
     )
 
-""" Exporter infos """
+# --- Exporter infos ---
 def createExporterInfo() -> InfoMetricFamily:
     return InfoMetricFamily(
         "crowdsec_exporter",
