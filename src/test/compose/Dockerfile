@@ -7,8 +7,8 @@
 #   - Dependencies are installed at build time → only rebuild if requirements.txt changes
 #
 # To test the PRODUCTION build instead:
-#   docker compose -f dev/docker-compose.yaml build --build-arg TARGET=prod exporter
-#   (see the override in docker-compose.yaml)
+#   docker compose -f src/test/compose/compose.yaml build --build-arg TARGET=prod exporter
+#   (see the override in compose.yaml)
 
 FROM python:3.12-slim
 
@@ -19,7 +19,7 @@ COPY src/main/python/requirements.txt .
 RUN --mount=type=secret,id=corporate_ca,target=/etc/ssl/certs/ca-certificates.crt \
     pip install --no-cache-dir -r requirements.txt
 
-# Source is NOT copied here – it is volume-mounted by docker-compose.yaml.
+# Source is NOT copied here – it is volume-mounted by compose.yaml.
 # This means: edit code → docker compose restart exporter → changes are live.
 
 ENV PYTHONUNBUFFERED=1 \

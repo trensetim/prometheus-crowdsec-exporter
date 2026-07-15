@@ -6,14 +6,6 @@
 #   prometheus      time-series DB, scrapes exporter every 15s
 #   grafana         dashboard UI, datasource pre-configured
 #
-# Usage:
-#   First start:          docker compose up --build
-#   Code change:          docker compose restart exporter
-#   requirements change:  docker compose up --build exporter
-#   Tear down + volumes:  docker compose down -v
-#   Logs, one service:    docker compose logs -f exporter
-#   Test prod image:      docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up --build exporter
-#
 # Ports (all localhost only):
 #   http://localhost:3000  → Grafana  (admin / dev-grafana-pw)
 #   http://localhost:9090  → Prometheus
@@ -22,24 +14,17 @@
 
 name: crowdsec-exporter-dev
 
-# ── Shared network (replaces default bridge, keeps service names resolvable) ─
 networks:
   dev:
     driver: bridge
-
-# ── Volumes ──────────────────────────────────────────────────────────────────
 volumes:
   prometheus-data:
   grafana-data:
-
-# ── Secrets ──────────────────────────────────────────────────────────────────
 secrets:
   corporate_ca:
     file: /etc/ssl/certs/ca-certificates.crt
 
-# ── Services ─────────────────────────────────────────────────────────────────
 services:
-
   # --------------------------------------------------------------------------
   # Mock CrowdSec LAPI
   # Replaces the real CrowdSec agent (~300 MB) with a tiny stdlib HTTP server.
@@ -55,10 +40,16 @@ services:
     env_file:
       - lapi-key.env
     ports:
-      - "127.0.0.1:8080:8080"   # expose for manual curl; not needed by exporter
+      - "127.0.0.1:8080:8080" # expose for manual curl; not needed by exporter
     networks: [dev]
     healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')",
+        ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -80,7 +71,7 @@ services:
       - lapi-key.env
       - exporter.env
     volumes:
-      - ../../main/python:/app/src:ro   # mount source read-only → restart to pick up changes
+      - ../../main/python:/app/src:ro # mount source read-only → restart to pick up changes
     ports:
       - "127.0.0.1:8000:8000"
     networks: [dev]
@@ -88,7 +79,13 @@ services:
       mock-crowdsec:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/metrics')"]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/metrics')",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -107,8 +104,8 @@ services:
       - "--storage.tsdb.path=/prometheus"
       - "--storage.tsdb.retention.time=2h"
       - "--storage.tsdb.wal-compression"
-      - "--web.enable-lifecycle"          # allows POST /-/reload without restart
-      - "--log.level=info"                # suppress scrape noise in dev logs
+      - "--web.enable-lifecycle" # allows POST /-/reload without restart
+      - "--log.level=info" # suppress scrape noise in dev logs
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
@@ -133,8 +130,8 @@ services:
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_ANALYTICS_REPORTING_ENABLED: "false"
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
-      GF_INSTALL_PLUGINS:         ""       # no plugins in dev
-      GF_LOG_LEVEL:               "info"
+      GF_INSTALL_PLUGINS: "" # no plugins in dev
+      GF_LOG_LEVEL: "info"
     volumes:
       - ./datasources/prometheus.yaml:/etc/grafana/provisioning/datasources/prometheus.yaml:ro
       - grafana-data:/var/lib/grafana
