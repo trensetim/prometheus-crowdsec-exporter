@@ -76,7 +76,7 @@ services:
   exporter:
     build:
       context: ../../.. # project root
-      dockerfile: src/build/docker/Dockerfile.dev
+      dockerfile: src/test/compose/Dockerfile
       secrets:
         - corporate_ca
     env_file: .env
