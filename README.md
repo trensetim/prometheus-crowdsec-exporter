@@ -1,93 +1,263 @@
-# prometheus-crowdsec-export
+# prometheus-crowdsec-exporter
 
+A Prometheus exporter for [CrowdSec](https://www.crowdsec.net/) that polls the CrowdSec Local API (LAPI) and exposes decisions, alerts, and allowlists as Prometheus metrics for visualization in Grafana.
 
+---
 
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## Architecture
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.timtrense.com/tim/prometheus-crowdsec-export.git
-git branch -M main
-git push -uf origin main
+CrowdSec LAPI (:8080)
+       │
+       │  GET /v1/decisions
+       │  GET /v1/alerts
+       │  GET /v1/allowlists
+       │  (X-Api-Key: bouncer, read-only)
+       ▼
+ [ Exporter Pod ]  ──►  /metrics (:8000)  ──►  Prometheus  ──►  Grafana
+       │
+       └─ stdout (structured JSON)  ──►  Loki  ──►  Grafana (logs panel)
 ```
 
-## Integrate with your tools
+The exporter is triggered by Prometheus scrapes (pull model) – it polls the LAPI on every `/metrics` request and yields fresh metrics each time.
 
-* [Set up project integrations](https://gitlab.timtrense.com/tim/prometheus-crowdsec-export/-/settings/integrations)
+---
 
-## Collaborate with your team
+## Metrics
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+### Decisions (`GET /v1/decisions`)
 
-## Test and Deploy
+| Metric                                                     | Type    | Labels                                                                                                       | Description                                    |
+| ---------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| `crowdsec_decisions`                                       | Gauge   | `decisionType`, `origin`, `scenario`, `scope`                                                                | Currently active decisions aggregated by type  |
+| `crowdsec_decisions_details`                               | Gauge   | `decisionType`, `origin`, `scenario`, `scope`, `val`, `decisionId`, `uuid`, `duration`, `until`, `simulated` | One entry per active decision with full detail |
+| `crowdsec_decisions_fetched_total`                         | Counter | –                                                                                                            | Total decisions fetched since exporter start   |
+| `crowdsec_last_successful_decision_poll_timestamp_seconds` | Gauge   | `endpoint`                                                                                                   | Unix timestamp of last successful poll         |
 
-Use the built-in continuous integration in GitLab.
+### Alerts (`GET /v1/alerts`)
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+| Metric                                                   | Type    | Labels                                                                                                        | Description                                         |
+| -------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `crowdsec_alerts`                                        | Gauge   | `scenario`, `simulated`, `remediation`                                                                        | Currently active alerts aggregated by scenario      |
+| `crowdsec_alerts_details`                                | Gauge   | `alertIdentifier`, `uuid`, `machineId`, `createdAt`, `scenario`, `country`, `ip`, `asName`, `decisionType`, … | One entry per alert with full geo and source detail |
+| `crowdsec_alerts_fetched_total`                          | Counter | –                                                                                                             | Total alerts fetched since exporter start           |
+| `crowdsec_last_successful_alerts_poll_timestamp_seconds` | Gauge   | `endpoint`                                                                                                    | Unix timestamp of last successful poll              |
 
-***
+### Allowlists (`GET /v1/allowlists`)
 
-# Editing this README
+| Metric                                                       | Type    | Labels                                                                   | Description                                        |
+| ------------------------------------------------------------ | ------- | ------------------------------------------------------------------------ | -------------------------------------------------- |
+| `crowdsec_allowlists_items`                                  | Gauge   | `name`, `allowlistId`, `consoleManaged`                                  | Number of active (non-expired) items per allowlist |
+| `crowdsec_allowlist_items_detail`                            | Gauge   | `allowlistId`, `name`, `value`, `description`, `expiration`, `isExpired` | One entry per allowlist item with expiry state     |
+| `crowdsec_allowlist_expiring_items`                          | Gauge   | `name`, `allowlistId`, `consoleManaged`                                  | Items expiring within 24 hours                     |
+| `crowdsec_allowlists_fetched_total`                          | Counter | –                                                                        | Total allowlists fetched since exporter start      |
+| `crowdsec_last_successful_allowlists_poll_timestamp_seconds` | Gauge   | `endpoint`                                                               | Unix timestamp of last successful poll             |
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+### Exporter health
 
-## Suggestions for a good README
+| Metric                       | Type    | Labels                   | Description               |
+| ---------------------------- | ------- | ------------------------ | ------------------------- |
+| `crowdsec_poll_errors_total` | Counter | `endpoint`, `error_type` | Failed LAPI poll attempts |
+| `crowdsec_exporter_info`     | Info    | `version`, `git_commit`  | Build metadata            |
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+---
 
-## Name
-Choose a self-explaining name for your project.
+## Environment variables
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+| Variable                | Required | Default   | Description                                                       |
+| ----------------------- | -------- | --------- | ----------------------------------------------------------------- |
+| `CROWDSEC_LAPI_URL`     | ✓        | –         | e.g. `http://crowdsec.crowdsec-monitoring.svc.cluster.local:8080` |
+| `CROWDSEC_API_KEY`      | ✓        | –         | Bouncer API key – read-only, injected via Kubernetes Secret       |
+| `METRICS_PORT`          |          | `8000`    | Port for the `/metrics` HTTP endpoint                             |
+| `METRICS_HOST`          |          | `0.0.0.0` | Bind address (NetworkPolicy restricts inbound)                    |
+| `POLL_INTERVAL_SECONDS` |          | `60`      | Polling interval in seconds                                       |
+| `LOG_LEVEL`             |          | `INFO`    | `DEBUG` / `INFO` / `WARNING` / `ERROR`                            |
+| `APP_VERSION`           |          | `unknown` | Injected via `--build-arg` at image build time                    |
+| `GIT_COMMIT`            |          | `unknown` | Injected via `--build-arg` at image build time                    |
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+---
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+## Logging
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+All log output is structured JSON to `stdout` – compatible with Kubernetes log collection and Loki.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+Every log line contains at minimum:
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+| Field       | Example                | Description                                              |
+| ----------- | ---------------------- | -------------------------------------------------------- |
+| `timestamp` | `2026-07-14T09:40:46Z` | ISO 8601 UTC                                             |
+| `level`     | `info`                 | `debug` / `info` / `warning` / `error`                   |
+| `logger`    | `src.collector`        | Python module                                            |
+| `event`     | `pollSuccess`          | Machine-readable event type (stable – use as Loki label) |
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+Sensitive fields (`apiKey`, `token`, `secret`, `password`) are automatically masked with `***` before serialisation.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+### Key log events
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+| `event`                  | Level | Description                                           |
+| ------------------------ | ----- | ----------------------------------------------------- |
+| `startup`                | info  | Process started, config loaded                        |
+| `collector_initialised`  | info  | HTTP session created, LAPI URL confirmed              |
+| `metricsServerStarted`   | info  | `/metrics` endpoint is listening                      |
+| `pollStart`              | debug | Beginning a LAPI request                              |
+| `pollSuccess`            | info  | LAPI request completed successfully                   |
+| `pollFailed`             | error | LAPI request failed – check `error_type` and `detail` |
+| `pollEmpty`              | debug | LAPI returned 204 (no active items)                   |
+| `decision_observed`      | debug | Individual decision seen during aggregation           |
+| `alertsObserved`         | debug | Individual alert seen during aggregation              |
+| `allowlistsGaugeUpdated` | debug | Allowlist metrics written                             |
+| `shutdownSignalReceived` | info  | SIGTERM or SIGINT received                            |
+| `shutdownComplete`       | info  | Clean exit                                            |
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+---
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+## Build
 
-## License
-For open source projects, say how it is licensed.
+### Production image (distroless)
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+```bash
+docker build \
+  --secret id=corporate_ca,src=/etc/ssl/certs/ca-certificates.crt \
+  --build-arg APP_VERSION=1.0.0 \
+  --build-arg GIT_COMMIT=$(git rev-parse --short HEAD) \
+  -t crowdsec-exporter:1.0.0 \
+  .
+```
+
+The production image uses `gcr.io/distroless/python3-debian12:nonroot`:
+- No shell, no package manager → minimal attack surface
+- Runs as uid 65532 (nonroot) → satisfies `runAsNonRoot: true`
+- Multi-stage build → only application code and locked dependencies in final image
+
+### Validate the build
+
+```bash
+# Config validation fires (expected: FATAL config error – no env vars set)
+docker run --rm crowdsec-exporter:1.0.0
+
+# No shell available (expected: error)
+docker run --rm crowdsec-exporter:1.0.0 sh
+
+# Check image size
+docker images crowdsec-exporter
+```
+
+---
+
+## Local development
+
+The `dev/` directory contains a complete local stack with a mock CrowdSec LAPI, Prometheus, and Grafana.
+
+### Prerequisites
+
+- Docker with BuildKit enabled (`export DOCKER_BUILDKIT=1` or set in `/etc/docker/daemon.json`)
+- Corporate CA registered: `sudo cp your-ca.crt /usr/local/share/ca-certificates/ && sudo update-ca-certificates`
+
+### Start the dev stack
+
+```bash
+cd dev/
+docker compose up --build
+```
+
+| URL                                | Service                              |
+| ---------------------------------- | ------------------------------------ |
+| http://localhost:3000              | Grafana (`admin` / `dev-grafana-pw`) |
+| http://localhost:9090              | Prometheus                           |
+| http://localhost:8000/metrics      | Exporter metrics (direct)            |
+| http://localhost:8080/v1/decisions | Mock CrowdSec LAPI                   |
+
+### Iteration workflow
+
+```bash
+# Code changed (src/) → restart only, no rebuild needed
+docker compose restart exporter
+
+# requirements.txt changed → rebuild
+docker compose up --build exporter
+
+# View live logs
+docker compose logs -f exporter
+
+# Manual LAPI test
+curl -H "X-Api-Key: dev-bouncer-key-12345" http://localhost:8080/v1/decisions | jq .
+
+# Check metrics
+curl -s http://localhost:8000/metrics | grep crowdsec
+
+# Tear down and clean volumes
+docker compose down -v
+```
+
+---
+
+## Security
+
+**Secrets:** The bouncer API key (`CROWDSEC_API_KEY`) is a read-only credential. In Kubernetes, inject it via an `ExternalSecret` (External Secrets Operator) referencing Vault or a similar secret store. Never put it in `values.yaml` or commit it to Git.
+
+**Container hardening (Kubernetes):**
+```yaml
+securityContext:
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+automountServiceAccountToken: false
+```
+
+**Network:** The exporter requires only two network paths:
+- Egress to CrowdSec LAPI on port 8080
+- Ingress from Prometheus on port 8000
+
+All other traffic should be denied via `NetworkPolicy`.
+
+---
+
+## Dependency management
+
+Direct dependencies are listed in `requirements.in`. Locked, hashed versions are in `requirements.txt` (generated by `pip-compile`).
+
+```bash
+pip-compile --generate-hashes requirements.in
+```
+
+### Dependencies
+
+| Package             | Purpose                   | Maintained by     |
+| ------------------- | ------------------------- | ----------------- |
+| `prometheus_client` | Metrics exposition        | Prometheus / CNCF |
+| `requests`          | CrowdSec LAPI HTTP client | Python community  |
+| `structlog`         | Structured JSON logging   | Hynek Schlawack   |
+
+---
+
+## Project structure
+
+```
+.
+├── src/
+│   ├── main.py           # Entry point – startup, signal handling, HTTP server
+│   ├── config.py         # Configuration from environment variables
+│   ├── collector.py      # Prometheus Collector – polls LAPI, yields metrics
+│   ├── logger.py         # structlog JSON logging setup
+│   ├── metrics.py        # Prometheus MetricFamily definitions
+│   └── models/
+│       ├── _base.py      # Shared parse helpers (strField, boolField, …)
+│       ├── decision.py   # Decision dataclass + metricLabels/metricDetails
+│       ├── alert.py      # Alert, AlertSource, AlertEvent dataclasses
+│       ├── allowlist.py  # Allowlist, AllowlistItem dataclasses
+│       ├── parser.py     # parseDecisions / parseAlerts / parseAllowlists
+│       └── __init__.py   # Public re-exports
+├── dev/
+│   ├── docker-compose.yaml
+│   ├── .env              # Dev secrets (never commit)
+│   ├── mock-crowdsec/    # Stdlib Python mock LAPI server
+│   ├── prometheus/       # Minimal scrape config
+│   └── grafana/          # Auto-provisioned Prometheus datasource
+├── Dockerfile            # Production – distroless, multi-stage
+├── Dockerfile.dev        # Development – python:slim, volume-mounted source
+├── requirements.in       # Direct dependencies
+├── requirements.txt      # Locked + hashed (generated by pip-compile)
+└── .dockerignore
+```
