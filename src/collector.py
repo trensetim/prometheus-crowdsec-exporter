@@ -44,6 +44,9 @@ class CrowdSecCollector(Collector):
 
     def collect(self) -> Iterable[Metric]:
         self._pollErrorsTotal = metrics.createPollErrorsTotal()
+        for endpoint in ["decisions", "alerts", "allowlists"]:
+            for errorType in ["connectionError", "httpError", "parseError"]:
+                self._pollErrorsTotal.add_metric([endpoint, errorType], 0)
 
         exporterInfo = metrics.createExporterInfo()
         exporterInfo.add_metric([self._config.appVersion, self._config.gitCommit], 1)
@@ -72,6 +75,7 @@ class CrowdSecCollector(Collector):
             raw = self._fetch(endpoint, _DECISIONS_PATH)
         except requests.exceptions.ConnectionError:
             self._pollErrorsTotal.add_metric([endpoint, "connectionError"], 1)
+            decisionsPollErrorsTotal.add_metric([endpoint, "connectionError"], 1)
             return
 
         if raw is None:
@@ -83,6 +87,7 @@ class CrowdSecCollector(Collector):
         # check for parse errors and in case of errors send metric
         if skipped:
             decisionsPollErrorsCounter = skipped
+            self._pollErrorsTotal.add_metric([endpoint, "parseError"], decisionsPollErrorsCounter)
             decisionsPollErrorsTotal.add_metric([endpoint, "parseError"], decisionsPollErrorsCounter)
             yield decisionsPollErrorsTotal
 
@@ -167,6 +172,7 @@ class CrowdSecCollector(Collector):
             raw = self._fetch(endpoint, _ALLOWLISTS_PATH)
         except requests.exceptions.ConnectionError:
             self._pollErrorsTotal.add_metric([endpoint, "connectionError"], 1)
+            allowlistsPollErrorsTotal.add_metric([endpoint, "connectionError"], 1)
             return
 
         if raw is None:
@@ -178,6 +184,7 @@ class CrowdSecCollector(Collector):
         # check for parse errors and in case of errors send metric
         if skipped:
             allowlistsPollErrorsCounter = skipped
+            self._pollErrorsTotal.add_metric([endpoint, "parseError"], allowlistsPollErrorsCounter)
             allowlistsPollErrorsTotal.add_metric([endpoint, "parseError"], allowlistsPollErrorsCounter)
             yield allowlistsPollErrorsTotal
 
@@ -241,6 +248,7 @@ class CrowdSecCollector(Collector):
             raw = self._fetch(endpoint, _ALERTS_PATH)
         except requests.exceptions.ConnectionError:
             self._pollErrorsTotal.add_metric([endpoint, "connectionError"], 1)
+            alertsPollErrorsTotal.add_metric([endpoint, "connectionError"], 1)
             return
 
         if raw is None:
@@ -252,6 +260,7 @@ class CrowdSecCollector(Collector):
         # check for parse errors and in case of errors send metric
         if skipped:
             alertsPollErrorsCounter = skipped
+            self._pollErrorsTotal.add_metric([endpoint, "parseError"], alertsPollErrorsCounter)
             alertsPollErrorsTotal.add_metric([endpoint, "parseError"], alertsPollErrorsCounter)
             yield alertsPollErrorsTotal
 

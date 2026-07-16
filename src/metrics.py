@@ -123,8 +123,8 @@ def createExporterInfo() -> GaugeMetricFamily:
         labels=["version",  "git_commit"],
     )
 
-def createPollErrorsTotal() -> InfoMetricFamily:
-    return CounterMetricFamily(
+def createPollErrorsTotal() -> GaugeMetricFamily:
+    return GaugeMetricFamily(
         "crowdsec_poll_errors_total",
         "Total failed LAPI poll attempts",
         labels=["endpoint", "error_type"]
