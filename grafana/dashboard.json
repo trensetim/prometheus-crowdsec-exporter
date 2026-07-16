@@ -1,0 +1,3019 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "description": "The Dashboard shows the latests alerts, decisions and allowlists exposed by crowdsec.\nAll data shown gets collected via prometheus-crowdsec exporter.",
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 1,
+    "links": [],
+    "panels": [
+        {
+            "datasource": {
+                "type": "mixed",
+                "uid": "-- Mixed --"
+            },
+            "description": "",
+            "gridPos": {
+                "h": 2,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 1,
+            "options": {
+                "code": {
+                    "language": "plaintext",
+                    "showLineNumbers": false,
+                    "showMiniMap": false
+                },
+                "content": "<div style=\"border-bottom: 2px solid #666666; padding-bottom: 10px; margin-bottom: 15px;\">\r\n  <h1 style=\"margin: 0; color: #white;\">Cyberthreat Insights</h1>\r\n</div>",
+                "mode": "html"
+            },
+            "pluginVersion": "10.4.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "datasource",
+                        "uid": "-- Dashboard --"
+                    },
+                    "refId": "A"
+                }
+            ],
+            "transparent": true,
+            "type": "text"
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 2
+            },
+            "id": 4,
+            "panels": [],
+            "title": "Alerts",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "cellOptions": {
+                            "type": "auto"
+                        },
+                        "filterable": true,
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Country"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 82
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Affected Host"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "IP"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 110
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Country"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 111
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Decision"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 88
+                            },
+                            {
+                                "id": "custom.cellOptions",
+                                "value": {
+                                    "type": "color-text"
+                                }
+                            },
+                            {
+                                "id": "mappings",
+                                "value": [
+                                    {
+                                        "options": {
+                                            "ban": {
+                                                "color": "red",
+                                                "index": 0,
+                                                "text": "Ban"
+                                            },
+                                            "captcha": {
+                                                "color": "orange",
+                                                "index": 1,
+                                                "text": "Captcha"
+                                            },
+                                            "throttle": {
+                                                "color": "yellow",
+                                                "index": 2,
+                                                "text": "Throttle"
+                                            }
+                                        },
+                                        "type": "value"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "ASN"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 75
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Count"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.cellOptions",
+                                "value": {
+                                    "mode": "gradient",
+                                    "type": "gauge",
+                                    "valueDisplayMode": "text"
+                                }
+                            },
+                            {
+                                "id": "color"
+                            },
+                            {
+                                "id": "thresholds",
+                                "value": {
+                                    "mode": "absolute",
+                                    "steps": [
+                                        {
+                                            "color": "green",
+                                            "value": null
+                                        },
+                                        {
+                                            "color": "#EAB839",
+                                            "value": 25
+                                        },
+                                        {
+                                            "color": "red",
+                                            "value": 50
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 9,
+                "w": 13,
+                "x": 0,
+                "y": 3
+            },
+            "id": 7,
+            "options": {
+                "cellHeight": "sm",
+                "footer": {
+                    "countRows": false,
+                    "enablePagination": true,
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "frameIndex": 0,
+                "showHeader": true,
+                "sortBy": []
+            },
+            "pluginVersion": "10.4.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "crowdsec_alerts_details{\r\n  machineId=~\"$host\",\r\n  country=~\"$country\",\r\n  scenario=~\"$scenario\"\r\n}",
+                    "instant": false,
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Cyberthreats over last month",
+            "transformations": [
+                {
+                    "id": "labelsToFields",
+                    "options": {}
+                },
+                {
+                    "id": "merge",
+                    "options": {}
+                },
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": {
+                            "Time": true,
+                            "__name__": true,
+                            "alertId": true,
+                            "asName": false,
+                            "asNumber": false,
+                            "createdAt": true,
+                            "decisionScope": true,
+                            "env": true,
+                            "instance": true,
+                            "job": true,
+                            "latitude": true,
+                            "longitude": true,
+                            "remediation": true,
+                            "scenario": true,
+                            "scenarioHash": true,
+                            "scenarioVersion": true,
+                            "simulated": true,
+                            "startAt": true,
+                            "stopAt": true,
+                            "uuid": true,
+                            "{__name__=\"crowdsec_alerts_details\", alertId=\"101\", asName=\"EXAMPLE-AS\", asNumber=\"64496\", country=\"CN\", createdAt=\"2026-07-08T08:00:00+00:00\", decisionScope=\"Ip\", decisionType=\"ban\", env=\"dev\", eventsCount=\"15\", instance=\"exporter:8000\", ip=\"203.0.113.42\", job=\"crowdsec-exporter\", latitude=\"39.9042\", longitude=\"116.4074\", machineId=\"dev-machine-01\", remediation=\"true\", scenario=\"crowdsecurity/ssh-bf\", scenarioHash=\"abc123\", scenarioVersion=\"0.1\", simulated=\"false\", startAt=\"2026-07-08T07:59:00+00:00\", stopAt=\"2026-07-08T08:00:00+00:00\", uuid=\"a1-uuid\"}": true
+                        },
+                        "includeByName": {},
+                        "indexByName": {
+                            "Time": 7,
+                            "__name__": 9,
+                            "alertId": 10,
+                            "asName": 3,
+                            "asNumber": 2,
+                            "country": 1,
+                            "createdAt": 11,
+                            "decisionScope": 12,
+                            "decisionType": 5,
+                            "env": 13,
+                            "eventsCount": 6,
+                            "instance": 14,
+                            "ip": 4,
+                            "job": 15,
+                            "latitude": 16,
+                            "longitude": 17,
+                            "machineId": 0,
+                            "remediation": 18,
+                            "scenario": 19,
+                            "scenarioHash": 20,
+                            "scenarioVersion": 21,
+                            "simulated": 22,
+                            "startAt": 23,
+                            "stopAt": 24,
+                            "uuid": 25,
+                            "{__name__=\"crowdsec_alerts_details\", alertId=\"101\", asName=\"EXAMPLE-AS\", asNumber=\"64496\", country=\"CN\", createdAt=\"2026-07-08T08:00:00+00:00\", decisionScope=\"Ip\", decisionType=\"ban\", env=\"dev\", eventsCount=\"15\", instance=\"exporter:8000\", ip=\"203.0.113.42\", job=\"crowdsec-exporter\", latitude=\"39.9042\", longitude=\"116.4074\", machineId=\"dev-machine-01\", remediation=\"true\", scenario=\"crowdsecurity/ssh-bf\", scenarioHash=\"abc123\", scenarioVersion=\"0.1\", simulated=\"false\", startAt=\"2026-07-08T07:59:00+00:00\", stopAt=\"2026-07-08T08:00:00+00:00\", uuid=\"a1-uuid\"}": 8
+                        },
+                        "renameByName": {
+                            "asName": "AS Name",
+                            "asNumber": "ASN",
+                            "country": "Country",
+                            "decisionType": "Decision",
+                            "eventsCount": "Count",
+                            "ip": "IP",
+                            "machineId": "Affected Host"
+                        }
+                    }
+                },
+                {
+                    "id": "convertFieldType",
+                    "options": {
+                        "conversions": [
+                            {
+                                "destinationType": "number",
+                                "targetField": "eventsCount"
+                            }
+                        ],
+                        "fields": {}
+                    }
+                },
+                {
+                    "id": "groupBy",
+                    "options": {
+                        "fields": {
+                            "AS Name": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "ASN": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Affected Host": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Count": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Country": {
+                                "aggregations": [
+                                    "lastNotNull"
+                                ],
+                                "operation": "groupby"
+                            },
+                            "Decision": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "IP": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "crowdsec_alerts_details": {
+                                "aggregations": []
+                            }
+                        }
+                    }
+                }
+            ],
+            "type": "table"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        }
+                    },
+                    "mappings": []
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 9,
+                "w": 4,
+                "x": 13,
+                "y": 3
+            },
+            "id": 6,
+            "options": {
+                "displayLabels": [
+                    "name"
+                ],
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true,
+                    "values": [
+                        "percent"
+                    ]
+                },
+                "pieType": "pie",
+                "reduceOptions": {
+                    "calcs": [
+                        "count"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "topk(10,\r\n  sum by (country) (\r\n    crowdsec_alerts_details{\r\n      machineId=~\"$host\",\r\n      country!=\"\"\r\n    }\r\n  )\r\n)",
+                    "instant": false,
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Top 10 Cyberthreat Countries",
+            "type": "piechart"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "fixedColor": "dark-red",
+                        "mode": "continuous-reds"
+                    },
+                    "custom": {
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        }
+                    },
+                    "displayName": "Count",
+                    "fieldMinMax": true,
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Country"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "continuous-reds"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 9,
+                "w": 7,
+                "x": 17,
+                "y": 3
+            },
+            "id": 5,
+            "options": {
+                "basemap": {
+                    "config": {},
+                    "name": "Layer 0",
+                    "type": "default"
+                },
+                "controls": {
+                    "mouseWheelZoom": true,
+                    "showAttribution": true,
+                    "showDebug": false,
+                    "showMeasure": false,
+                    "showScale": false,
+                    "showZoom": true
+                },
+                "layers": [
+                    {
+                        "config": {
+                            "showLegend": false,
+                            "style": {
+                                "color": {
+                                    "fixed": "dark-red"
+                                },
+                                "opacity": 0.2,
+                                "rotation": {
+                                    "fixed": 0,
+                                    "max": 360,
+                                    "min": -360,
+                                    "mode": "mod"
+                                },
+                                "size": {
+                                    "field": "Count",
+                                    "fixed": 5,
+                                    "max": 35,
+                                    "min": 5
+                                },
+                                "symbol": {
+                                    "fixed": "img/icons/marker/circle.svg",
+                                    "mode": "fixed"
+                                },
+                                "symbolAlign": {
+                                    "horizontal": "center",
+                                    "vertical": "center"
+                                },
+                                "text": {
+                                    "field": "country",
+                                    "fixed": "",
+                                    "mode": "fixed"
+                                },
+                                "textConfig": {
+                                    "fontSize": 12,
+                                    "offsetX": 0,
+                                    "offsetY": 0,
+                                    "textAlign": "center",
+                                    "textBaseline": "middle"
+                                }
+                            }
+                        },
+                        "filterData": {
+                            "id": "byRefId",
+                            "options": "A"
+                        },
+                        "location": {
+                            "latitude": "crowdsec_alerts_details",
+                            "longitude": "crowdsec_alerts_details",
+                            "mode": "auto"
+                        },
+                        "name": "Markers",
+                        "tooltip": true,
+                        "type": "markers"
+                    }
+                ],
+                "tooltip": {
+                    "mode": "details"
+                },
+                "view": {
+                    "allLayers": true,
+                    "id": "coords",
+                    "lat": 0,
+                    "lon": 0,
+                    "zoom": 1
+                }
+            },
+            "pluginVersion": "10.4.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "crowdsec_alerts_details{\r\n  machineId=~\"$host\",\r\n  country=~\"$country\",\r\n  latitude!=\"\",\r\n  longitude!=\"\"\r\n}",
+                    "format": "table",
+                    "instant": false,
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Cyberthreats Map",
+            "transformations": [
+                {
+                    "id": "labelsToFields",
+                    "options": {}
+                },
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": {
+                            "Time": true,
+                            "__name__": true,
+                            "alertId": true,
+                            "asName": true,
+                            "asNumber": true,
+                            "createdAt": true,
+                            "crowdsec_alerts_details": true,
+                            "decisionScope": true,
+                            "decisionType": true,
+                            "env": true,
+                            "instance": true,
+                            "job": true,
+                            "machineId": true,
+                            "remediation": true,
+                            "scenario": true,
+                            "scenarioHash": true,
+                            "scenarioVersion": true,
+                            "simulated": true,
+                            "startAt": true,
+                            "stopAt": true,
+                            "uuid": true,
+                            "{__name__=\"crowdsec_alerts_details\", alertId=\"101\", asName=\"EXAMPLE-AS\", asNumber=\"64496\", country=\"CN\", createdAt=\"2026-07-08T08:00:00+00:00\", decisionScope=\"Ip\", decisionType=\"ban\", env=\"dev\", eventsCount=\"15\", instance=\"exporter:8000\", ip=\"203.0.113.42\", job=\"crowdsec-exporter\", latitude=\"39.9042\", longitude=\"116.4074\", machineId=\"dev-machine-01\", remediation=\"true\", scenario=\"crowdsecurity/ssh-bf\", scenarioHash=\"abc123\", scenarioVersion=\"0.1\", simulated=\"false\", startAt=\"2026-07-08T07:59:00+00:00\", stopAt=\"2026-07-08T08:00:00+00:00\", uuid=\"a1-uuid\"}": true
+                        },
+                        "includeByName": {},
+                        "indexByName": {
+                            "Time": 5,
+                            "__name__": 7,
+                            "alertId": 8,
+                            "asName": 9,
+                            "asNumber": 10,
+                            "country": 2,
+                            "createdAt": 11,
+                            "decisionScope": 12,
+                            "decisionType": 13,
+                            "env": 14,
+                            "eventsCount": 4,
+                            "instance": 15,
+                            "ip": 3,
+                            "job": 16,
+                            "latitude": 0,
+                            "longitude": 1,
+                            "machineId": 17,
+                            "remediation": 18,
+                            "scenario": 19,
+                            "scenarioHash": 20,
+                            "scenarioVersion": 21,
+                            "simulated": 22,
+                            "startAt": 23,
+                            "stopAt": 24,
+                            "uuid": 25,
+                            "{__name__=\"crowdsec_alerts_details\", alertId=\"101\", asName=\"EXAMPLE-AS\", asNumber=\"64496\", country=\"CN\", createdAt=\"2026-07-08T08:00:00+00:00\", decisionScope=\"Ip\", decisionType=\"ban\", env=\"dev\", eventsCount=\"15\", instance=\"exporter:8000\", ip=\"203.0.113.42\", job=\"crowdsec-exporter\", latitude=\"39.9042\", longitude=\"116.4074\", machineId=\"dev-machine-01\", remediation=\"true\", scenario=\"crowdsecurity/ssh-bf\", scenarioHash=\"abc123\", scenarioVersion=\"0.1\", simulated=\"false\", startAt=\"2026-07-08T07:59:00+00:00\", stopAt=\"2026-07-08T08:00:00+00:00\", uuid=\"a1-uuid\"}": 6
+                        },
+                        "renameByName": {
+                            "country": "Country",
+                            "eventsCount": "Count",
+                            "ip": "IP",
+                            "latitude": "lat",
+                            "longitude": "long"
+                        }
+                    }
+                }
+            ],
+            "type": "geomap"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "cellOptions": {
+                            "type": "auto"
+                        },
+                        "filterable": true,
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Created At"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "dateTimeAsIso"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Decision"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.cellOptions",
+                                "value": {
+                                    "type": "color-text"
+                                }
+                            },
+                            {
+                                "id": "mappings",
+                                "value": [
+                                    {
+                                        "options": {
+                                            "ban": {
+                                                "color": "red",
+                                                "index": 0,
+                                                "text": "Ban"
+                                            },
+                                            "captcha": {
+                                                "color": "orange",
+                                                "index": 1,
+                                                "text": "Captcha"
+                                            },
+                                            "throttle": {
+                                                "color": "yellow",
+                                                "index": 2,
+                                                "text": "Throttle"
+                                            }
+                                        },
+                                        "type": "value"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 9,
+                "w": 24,
+                "x": 0,
+                "y": 12
+            },
+            "id": 8,
+            "options": {
+                "cellHeight": "sm",
+                "footer": {
+                    "countRows": false,
+                    "enablePagination": true,
+                    "fields": [],
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "10.4.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "disableTextWrap": false,
+                    "editorMode": "builder",
+                    "expr": "crowdsec_alerts_details{machineId=~\"$host\", country=~\"$country\", scenario=~\"$scenario\"}",
+                    "fullMetaSearch": false,
+                    "includeNullMetadata": true,
+                    "instant": false,
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A",
+                    "useBackend": false
+                }
+            ],
+            "title": "Cyberthreats last 24h",
+            "transformations": [
+                {
+                    "id": "labelsToFields",
+                    "options": {}
+                },
+                {
+                    "id": "merge",
+                    "options": {}
+                },
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": {
+                            "Time": true,
+                            "__name__": true,
+                            "alertId": true,
+                            "crowdsec_alerts_details": true,
+                            "decisionScope": true,
+                            "env": true,
+                            "eventsCount": true,
+                            "instance": true,
+                            "job": true,
+                            "latitude": true,
+                            "longitude": true,
+                            "remediation": true,
+                            "scenarioHash": true,
+                            "scenarioVersion": true,
+                            "simulated": true,
+                            "startAt": true,
+                            "stopAt": true,
+                            "uuid": true,
+                            "{__name__=\"crowdsec_alerts_details\", alertId=\"101\", asName=\"EXAMPLE-AS\", asNumber=\"64496\", country=\"CN\", createdAt=\"2026-07-08T08:00:00+00:00\", decisionScope=\"Ip\", decisionType=\"ban\", env=\"dev\", eventsCount=\"15\", instance=\"exporter:8000\", ip=\"203.0.113.42\", job=\"crowdsec-exporter\", latitude=\"39.9042\", longitude=\"116.4074\", machineId=\"dev-machine-01\", remediation=\"true\", scenario=\"crowdsecurity/ssh-bf\", scenarioHash=\"abc123\", scenarioVersion=\"0.1\", simulated=\"false\", startAt=\"2026-07-08T07:59:00+00:00\", stopAt=\"2026-07-08T08:00:00+00:00\", uuid=\"a1-uuid\"}": true
+                        },
+                        "includeByName": {},
+                        "indexByName": {
+                            "Time": 8,
+                            "__name__": 11,
+                            "alertId": 12,
+                            "asName": 4,
+                            "asNumber": 3,
+                            "country": 2,
+                            "createdAt": 0,
+                            "decisionScope": 13,
+                            "decisionType": 6,
+                            "env": 14,
+                            "eventsCount": 9,
+                            "instance": 15,
+                            "ip": 5,
+                            "job": 16,
+                            "latitude": 17,
+                            "longitude": 18,
+                            "machineId": 1,
+                            "remediation": 19,
+                            "scenario": 7,
+                            "scenarioHash": 20,
+                            "scenarioVersion": 21,
+                            "simulated": 22,
+                            "startAt": 23,
+                            "stopAt": 24,
+                            "uuid": 25,
+                            "{__name__=\"crowdsec_alerts_details\", alertId=\"101\", asName=\"EXAMPLE-AS\", asNumber=\"64496\", country=\"CN\", createdAt=\"2026-07-08T08:00:00+00:00\", decisionScope=\"Ip\", decisionType=\"ban\", env=\"dev\", eventsCount=\"15\", instance=\"exporter:8000\", ip=\"203.0.113.42\", job=\"crowdsec-exporter\", latitude=\"39.9042\", longitude=\"116.4074\", machineId=\"dev-machine-01\", remediation=\"true\", scenario=\"crowdsecurity/ssh-bf\", scenarioHash=\"abc123\", scenarioVersion=\"0.1\", simulated=\"false\", startAt=\"2026-07-08T07:59:00+00:00\", stopAt=\"2026-07-08T08:00:00+00:00\", uuid=\"a1-uuid\"}": 10
+                        },
+                        "renameByName": {
+                            "asName": "AS Name",
+                            "asNumber": "ASN",
+                            "country": "Country",
+                            "createdAt": "Created At",
+                            "decisionType": "Decision",
+                            "ip": "IP",
+                            "machineId": "Host",
+                            "scenario": "Scenario"
+                        }
+                    }
+                },
+                {
+                    "id": "groupBy",
+                    "options": {
+                        "fields": {
+                            "AS Name": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "ASN": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Country": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Created At": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Decision": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Host": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "IP": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Scenario": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            }
+                        }
+                    }
+                }
+            ],
+            "type": "table"
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 21
+            },
+            "id": 3,
+            "panels": [],
+            "title": "Decisions",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "cellOptions": {
+                            "type": "auto"
+                        },
+                        "filterable": true,
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Decision Type"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.cellOptions",
+                                "value": {
+                                    "type": "color-text"
+                                }
+                            },
+                            {
+                                "id": "mappings",
+                                "value": [
+                                    {
+                                        "options": {
+                                            "ban": {
+                                                "color": "red",
+                                                "index": 0,
+                                                "text": "Ban"
+                                            },
+                                            "captcha": {
+                                                "color": "orange",
+                                                "index": 1,
+                                                "text": "Captcha"
+                                            },
+                                            "throttle": {
+                                                "color": "yellow",
+                                                "index": 2,
+                                                "text": "Throttle"
+                                            }
+                                        },
+                                        "type": "value"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Expires At"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "dateTimeAsIso"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 10,
+                "w": 18,
+                "x": 0,
+                "y": 22
+            },
+            "id": 9,
+            "options": {
+                "cellHeight": "sm",
+                "footer": {
+                    "countRows": false,
+                    "enablePagination": true,
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "10.4.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "crowdsec_decisions_details{}",
+                    "instant": false,
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Active Decisions",
+            "transformations": [
+                {
+                    "id": "labelsToFields",
+                    "options": {
+                        "keepLabels": [
+                            "decision_type",
+                            "duration",
+                            "env",
+                            "instance",
+                            "job",
+                            "origin",
+                            "scenario",
+                            "scope",
+                            "simulated",
+                            "until",
+                            "uuid",
+                            "val"
+                        ],
+                        "mode": "columns"
+                    }
+                },
+                {
+                    "id": "merge",
+                    "options": {}
+                },
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": {
+                            "10.20.30.0/24": true,
+                            "192.0.2.99": true,
+                            "198.51.100.7": true,
+                            "203.0.113.42": true,
+                            "203.0.113.55": true,
+                            "Time": true,
+                            "env": true,
+                            "instance": true,
+                            "job": true,
+                            "uuid": true
+                        },
+                        "includeByName": {},
+                        "indexByName": {
+                            "Time": 8,
+                            "crowdsec_decisions_details": 13,
+                            "decision_type": 0,
+                            "duration": 6,
+                            "env": 9,
+                            "instance": 10,
+                            "job": 11,
+                            "origin": 1,
+                            "scenario": 2,
+                            "scope": 3,
+                            "simulated": 7,
+                            "until": 5,
+                            "uuid": 12,
+                            "val": 4
+                        },
+                        "renameByName": {
+                            "198.51.100.7": "",
+                            "decision_type": "Decision Type",
+                            "duration": "Duration",
+                            "origin": "Origin",
+                            "scenario": "Scenario",
+                            "scope": "Scope",
+                            "simulated": "Simulated",
+                            "until": "Expires At",
+                            "val": "IP / Range"
+                        }
+                    }
+                },
+                {
+                    "id": "groupBy",
+                    "options": {
+                        "fields": {
+                            "Decision": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Decision Type": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Duration": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Expires At": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "IP / Range": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Origin": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Scenario": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Scope": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Simulated": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Until": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            }
+                        }
+                    }
+                }
+            ],
+            "type": "table"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "fieldMinMax": false,
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 1
+                            },
+                            {
+                                "color": "red",
+                                "value": 10
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 3,
+                "x": 18,
+                "y": 22
+            },
+            "id": 10,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "text": {
+                    "titleSize": 48,
+                    "valueSize": 48
+                },
+                "textMode": "value",
+                "wideLayout": true
+            },
+            "pluginVersion": "10.4.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "disableTextWrap": false,
+                    "editorMode": "builder",
+                    "expr": "count(crowdsec_decisions_details{decision_type=\"ban\"})",
+                    "fullMetaSearch": false,
+                    "includeNullMetadata": true,
+                    "instant": false,
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A",
+                    "useBackend": false
+                }
+            ],
+            "title": "Active bans",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "fieldMinMax": false,
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 1
+                            },
+                            {
+                                "color": "red",
+                                "value": 10
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 3,
+                "x": 21,
+                "y": 22
+            },
+            "id": 11,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "text": {
+                    "titleSize": 48,
+                    "valueSize": 48
+                },
+                "textMode": "value",
+                "wideLayout": true
+            },
+            "pluginVersion": "10.4.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "count(crowdsec_decisions_details{decision_type=\"captcha\"})",
+                    "instant": false,
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Active captchas",
+            "transformations": [
+                {
+                    "id": "labelsToFields",
+                    "options": {}
+                }
+            ],
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "fieldMinMax": false,
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 1
+                            },
+                            {
+                                "color": "red",
+                                "value": 10
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 3,
+                "x": 18,
+                "y": 27
+            },
+            "id": 13,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "text": {
+                    "titleSize": 48,
+                    "valueSize": 48
+                },
+                "textMode": "value",
+                "wideLayout": true
+            },
+            "pluginVersion": "10.4.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "count(count by (origin) (crowdsec_decisions_details))",
+                    "instant": false,
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Distinct origins",
+            "transformations": [
+                {
+                    "id": "labelsToFields",
+                    "options": {}
+                }
+            ],
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "fieldMinMax": false,
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 1
+                            },
+                            {
+                                "color": "red",
+                                "value": 10
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 5,
+                "w": 3,
+                "x": 21,
+                "y": 27
+            },
+            "id": 12,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "text": {
+                    "titleSize": 48,
+                    "valueSize": 48
+                },
+                "textMode": "value",
+                "wideLayout": true
+            },
+            "pluginVersion": "10.4.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "count(count by (scenario) (crowdsec_decisions_details))",
+                    "instant": false,
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Distinct scenarios",
+            "transformations": [
+                {
+                    "id": "labelsToFields",
+                    "options": {}
+                }
+            ],
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 30,
+                        "gradientMode": "opacity",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "smooth",
+                        "lineStyle": {
+                            "fill": "solid"
+                        },
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "normal"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "yellow",
+                                "value": null
+                            },
+                            {
+                                "color": "orange",
+                                "value": 3
+                            },
+                            {
+                                "color": "red",
+                                "value": 5
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 32
+            },
+            "id": 14,
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "sum"
+                    ],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "rate(crowdsec_decisions_fetched_total[5m])",
+                    "instant": false,
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Decision rate",
+            "type": "timeseries"
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 40
+            },
+            "id": 2,
+            "panels": [],
+            "title": "Allowlists",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "cellOptions": {
+                            "type": "auto"
+                        },
+                        "filterable": true,
+                        "inspect": false
+                    },
+                    "links": [],
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Name"
+                        },
+                        "properties": [
+                            {
+                                "id": "links",
+                                "value": [
+                                    {
+                                        "title": "Show Items",
+                                        "url": "d/${__dashboard.uid}/${__dashboard.slug}?var-allowlist=${__data.fields.allowlistId}"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Active Items (lastNotNull)"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "thresholds"
+                                }
+                            },
+                            {
+                                "id": "thresholds",
+                                "value": {
+                                    "mode": "absolute",
+                                    "steps": [
+                                        {
+                                            "color": "red",
+                                            "value": null
+                                        },
+                                        {
+                                            "color": "green",
+                                            "value": 1
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "id": "custom.cellOptions",
+                                "value": {
+                                    "type": "color-text"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Expiring (24h) (lastNotNull)"
+                        },
+                        "properties": [
+                            {
+                                "id": "color"
+                            },
+                            {
+                                "id": "thresholds",
+                                "value": {
+                                    "mode": "absolute",
+                                    "steps": [
+                                        {
+                                            "color": "green",
+                                            "value": null
+                                        },
+                                        {
+                                            "color": "orange",
+                                            "value": 1
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "id": "custom.cellOptions",
+                                "value": {
+                                    "type": "color-text"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 41
+            },
+            "id": 15,
+            "options": {
+                "cellHeight": "sm",
+                "footer": {
+                    "countRows": false,
+                    "enablePagination": true,
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true,
+                "sortBy": [
+                    {
+                        "desc": false,
+                        "displayName": "Name"
+                    }
+                ]
+            },
+            "pluginVersion": "10.4.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "crowdsec_allowlists_items",
+                    "instant": false,
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "crowdsec_allowlist_expiring_items",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "B"
+                }
+            ],
+            "title": "All Allowlists",
+            "transformations": [
+                {
+                    "id": "labelsToFields",
+                    "options": {}
+                },
+                {
+                    "id": "merge",
+                    "options": {}
+                },
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": {
+                            "Time": true,
+                            "__name__": true,
+                            "consoleManaged": false,
+                            "createdAt": true,
+                            "crowdsec_allowlists_items": false,
+                            "description": true,
+                            "env": true,
+                            "instance": true,
+                            "job": true,
+                            "updatedAt": true
+                        },
+                        "includeByName": {},
+                        "indexByName": {
+                            "Time": 6,
+                            "__name__": 5,
+                            "allowlistId": 1,
+                            "consoleManaged": 2,
+                            "createdAt": 7,
+                            "crowdsec_allowlist_expiring_items": 4,
+                            "crowdsec_allowlists_items": 3,
+                            "description": 8,
+                            "env": 9,
+                            "instance": 10,
+                            "job": 11,
+                            "name": 0,
+                            "updatedAt": 12
+                        },
+                        "renameByName": {
+                            "__name__": "",
+                            "allowlistId": "Allowlist ID",
+                            "consoleManaged": "Console Managed",
+                            "crowdsec_allowlist_expiring_items": "Expiring (24h)",
+                            "crowdsec_allowlists_items": "Active Items",
+                            "name": "Name"
+                        }
+                    }
+                },
+                {
+                    "id": "groupBy",
+                    "options": {
+                        "fields": {
+                            "Active Items": {
+                                "aggregations": [
+                                    "lastNotNull"
+                                ],
+                                "operation": "aggregate"
+                            },
+                            "Allowlist ID": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Console Managed": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Console managed": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Expiring (24h)": {
+                                "aggregations": [
+                                    "lastNotNull"
+                                ],
+                                "operation": "aggregate"
+                            },
+                            "Name": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            }
+                        }
+                    }
+                }
+            ],
+            "type": "table"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "cellOptions": {
+                            "type": "auto"
+                        },
+                        "filterable": true,
+                        "inspect": false
+                    },
+                    "mappings": [
+                        {
+                            "options": {
+                                "false": {
+                                    "color": "green",
+                                    "index": 0,
+                                    "text": "False"
+                                },
+                                "true": {
+                                    "color": "red",
+                                    "index": 1,
+                                    "text": "True"
+                                }
+                            },
+                            "type": "value"
+                        }
+                    ],
+                    "noValue": "Select an allowlist on the left.",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Expired"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.cellOptions",
+                                "value": {
+                                    "type": "color-text"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 41
+            },
+            "id": 16,
+            "options": {
+                "cellHeight": "sm",
+                "footer": {
+                    "countRows": false,
+                    "enablePagination": true,
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "10.4.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "crowdsec_allowlist_items_detail{allowlistId=\"$allowlist\"}",
+                    "instant": false,
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Allowlist items",
+            "transformations": [
+                {
+                    "id": "labelsToFields",
+                    "options": {}
+                },
+                {
+                    "id": "merge",
+                    "options": {}
+                },
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": {
+                            "Time": true,
+                            "__name__": true,
+                            "allowlistId": true,
+                            "crowdsec_allowlist_items_detail": true,
+                            "env": true,
+                            "instance": true,
+                            "job": true,
+                            "name": true
+                        },
+                        "includeByName": {},
+                        "indexByName": {
+                            "Time": 3,
+                            "__name__": 5,
+                            "allowlistId": 6,
+                            "crowdsec_allowlist_items_detail": 4,
+                            "description": 1,
+                            "env": 7,
+                            "instance": 8,
+                            "isExpired": 2,
+                            "job": 9,
+                            "name": 10,
+                            "value": 0
+                        },
+                        "renameByName": {
+                            "description": "Description",
+                            "isExpired": "Expired",
+                            "value": "IP / CIDR"
+                        }
+                    }
+                },
+                {
+                    "id": "groupBy",
+                    "options": {
+                        "fields": {
+                            "Description": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "Expired": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            },
+                            "IP / CIDR": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            }
+                        }
+                    }
+                }
+            ],
+            "type": "table"
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 49
+            },
+            "id": 17,
+            "panels": [],
+            "title": "Exporter Info",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "fixedColor": "blue",
+                        "mode": "fixed"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 3,
+                "w": 4,
+                "x": 0,
+                "y": 50
+            },
+            "id": 18,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "horizontal",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "/.*/",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "10.4.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "crowdsec_exporter_info{}",
+                    "instant": false,
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "App Info",
+            "transformations": [
+                {
+                    "id": "labelsToFields",
+                    "options": {}
+                },
+                {
+                    "id": "merge",
+                    "options": {}
+                },
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": {
+                            "Time": true,
+                            "__name__": true,
+                            "crowdsec_exporter_info": true,
+                            "env": true,
+                            "instance": true,
+                            "job": true
+                        },
+                        "includeByName": {},
+                        "indexByName": {
+                            "Time": 2,
+                            "__name__": 4,
+                            "crowdsec_exporter_info": 3,
+                            "env": 5,
+                            "git_commit": 1,
+                            "instance": 6,
+                            "job": 7,
+                            "version": 0
+                        },
+                        "renameByName": {
+                            "git_commit": "Commit",
+                            "version": "Version"
+                        }
+                    }
+                }
+            ],
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "orange",
+                                "value": 80
+                            },
+                            {
+                                "color": "red",
+                                "value": 300
+                            }
+                        ]
+                    },
+                    "unit": "s"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "options": "A"
+                        },
+                        "properties": [
+                            {
+                                "id": "displayName",
+                                "value": "Elapsed"
+                            },
+                            {
+                                "id": "unit",
+                                "value": "s"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "options": "B"
+                        },
+                        "properties": [
+                            {
+                                "id": "displayName",
+                                "value": "Last Poll At"
+                            },
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "blue",
+                                    "mode": "fixed"
+                                }
+                            },
+                            {
+                                "id": "unit",
+                                "value": "dateTimeAsIso"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 3,
+                "w": 5,
+                "x": 4,
+                "y": 50
+            },
+            "id": 19,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "horizontal",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "text": {
+                    "titleSize": 12
+                },
+                "textMode": "value_and_name",
+                "wideLayout": true
+            },
+            "pluginVersion": "10.4.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "time() - crowdsec_last_successful_decision_poll_timestamp_seconds{endpoint=\"decisions\"}",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "{{Elapsed}}",
+                    "range": true,
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "disableTextWrap": false,
+                    "editorMode": "code",
+                    "expr": "crowdsec_last_successful_decision_poll_timestamp_seconds{endpoint=\"decisions\"} * 1000",
+                    "fullMetaSearch": false,
+                    "includeNullMetadata": true,
+                    "instant": false,
+                    "legendFormat": "{{Last Poll At}}",
+                    "range": true,
+                    "refId": "B",
+                    "useBackend": false
+                }
+            ],
+            "title": "Last decision poll",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "orange",
+                                "value": 80
+                            },
+                            {
+                                "color": "red",
+                                "value": 300
+                            }
+                        ]
+                    },
+                    "unit": "s"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "options": "A"
+                        },
+                        "properties": [
+                            {
+                                "id": "displayName",
+                                "value": "Elapsed"
+                            },
+                            {
+                                "id": "unit",
+                                "value": "s"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "options": "B"
+                        },
+                        "properties": [
+                            {
+                                "id": "displayName",
+                                "value": "Last Poll At"
+                            },
+                            {
+                                "id": "unit",
+                                "value": "dateTimeAsIso"
+                            },
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "blue",
+                                    "mode": "fixed"
+                                }
+                            },
+                            {
+                                "id": "thresholds",
+                                "value": {
+                                    "mode": "percentage",
+                                    "steps": [
+                                        {
+                                            "color": "green",
+                                            "value": null
+                                        },
+                                        {
+                                            "color": "red",
+                                            "value": 80
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 3,
+                "w": 5,
+                "x": 9,
+                "y": 50
+            },
+            "id": 23,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "horizontal",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "text": {
+                    "titleSize": 12
+                },
+                "textMode": "value_and_name",
+                "wideLayout": true
+            },
+            "pluginVersion": "10.4.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "time() - crowdsec_last_successful_alerts_poll_timestamp_seconds{endpoint=\"alerts\"}",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "{{Elapsed}}",
+                    "range": true,
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "crowdsec_last_successful_alerts_poll_timestamp_seconds{endpoint=\"alerts\"} * 1000",
+                    "instant": false,
+                    "legendFormat": "{{Last Poll At}}",
+                    "range": true,
+                    "refId": "B"
+                }
+            ],
+            "title": "Last Alerts Poll",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "orange",
+                                "value": 80
+                            },
+                            {
+                                "color": "red",
+                                "value": 300
+                            }
+                        ]
+                    },
+                    "unit": "s"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "options": "A"
+                        },
+                        "properties": [
+                            {
+                                "id": "displayName",
+                                "value": "Elapsed"
+                            },
+                            {
+                                "id": "unit",
+                                "value": "s"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "options": "B"
+                        },
+                        "properties": [
+                            {
+                                "id": "displayName",
+                                "value": "Last Poll At"
+                            },
+                            {
+                                "id": "unit",
+                                "value": "dateTimeAsIso"
+                            },
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "blue",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 3,
+                "w": 5,
+                "x": 14,
+                "y": 50
+            },
+            "id": 24,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "horizontal",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "text": {
+                    "titleSize": 12
+                },
+                "textMode": "value_and_name",
+                "wideLayout": true
+            },
+            "pluginVersion": "10.4.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "time() - crowdsec_last_successful_allowlists_poll_timestamp_seconds{endpoint=\"allowlists\"}",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "{{Elapsed}}",
+                    "range": true,
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "crowdsec_last_successful_allowlists_poll_timestamp_seconds{endpoint=\"allowlists\"} * 1000",
+                    "instant": false,
+                    "legendFormat": "{{Last Poll At}}",
+                    "range": true,
+                    "refId": "B"
+                }
+            ],
+            "title": "Last Allowlists Poll",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "noValue": "0",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 1
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 3,
+                "w": 5,
+                "x": 19,
+                "y": 50
+            },
+            "id": 22,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "10.4.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "increase(crowdsec_poll_errors_total[1h])",
+                    "instant": false,
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Poll Errors (last hour)",
+            "transformations": [
+                {
+                    "id": "labelsToFields",
+                    "options": {}
+                },
+                {
+                    "id": "merge",
+                    "options": {}
+                },
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": {
+                            "Time": true,
+                            "__name__": true,
+                            "crowdsec_poll_errors_total": true,
+                            "endpoint": true,
+                            "env": true,
+                            "error_type": true,
+                            "instance": true,
+                            "job": false
+                        },
+                        "includeByName": {},
+                        "indexByName": {},
+                        "renameByName": {}
+                    }
+                },
+                {
+                    "id": "groupBy",
+                    "options": {
+                        "fields": {
+                            "Value": {
+                                "aggregations": [
+                                    "sum"
+                                ],
+                                "operation": "aggregate"
+                            },
+                            "job": {
+                                "aggregations": [],
+                                "operation": "groupby"
+                            }
+                        }
+                    }
+                }
+            ],
+            "type": "stat"
+        }
+    ],
+    "refresh": "",
+    "schemaVersion": 39,
+    "tags": [
+        "cyberthreat",
+        "insights",
+        "crowdsec"
+    ],
+    "templating": {
+        "list": [
+            {
+                "allValue": "",
+                "current": {
+                    "selected": false,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "PBFA97CFB590B2093"
+                },
+                "definition": "label_values(crowdsec_alerts_details,machineId)",
+                "hide": 0,
+                "includeAll": true,
+                "label": "Affected host",
+                "multi": true,
+                "name": "host",
+                "options": [],
+                "query": {
+                    "qryType": 1,
+                    "query": "label_values(crowdsec_alerts_details,machineId)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 0,
+                "type": "query"
+            },
+            {
+                "allValue": "",
+                "current": {
+                    "selected": false,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "PBFA97CFB590B2093"
+                },
+                "definition": "label_values(crowdsec_alerts_details,country)",
+                "hide": 0,
+                "includeAll": true,
+                "label": "Country",
+                "multi": true,
+                "name": "country",
+                "options": [],
+                "query": {
+                    "qryType": 1,
+                    "query": "label_values(crowdsec_alerts_details,country)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 5,
+                "type": "query"
+            },
+            {
+                "allValue": "",
+                "current": {
+                    "selected": false,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "PBFA97CFB590B2093"
+                },
+                "definition": "label_values(crowdsec_alerts_details{machineId=~\"$host\"},scenario)",
+                "hide": 0,
+                "includeAll": true,
+                "label": "Scenario",
+                "multi": true,
+                "name": "scenario",
+                "options": [],
+                "query": {
+                    "qryType": 1,
+                    "query": "label_values(crowdsec_alerts_details{machineId=~\"$host\"},scenario)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 0,
+                "type": "query"
+            },
+            {
+                "allValue": "",
+                "current": {
+                    "selected": false,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "PBFA97CFB590B2093"
+                },
+                "definition": "label_values(crowdsec_alerts_details,decisionType)",
+                "hide": 0,
+                "includeAll": true,
+                "label": "Decision type",
+                "multi": true,
+                "name": "decision",
+                "options": [],
+                "query": {
+                    "qryType": 1,
+                    "query": "label_values(crowdsec_alerts_details,decisionType)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 0,
+                "type": "query"
+            },
+            {
+                "allValue": "",
+                "current": {
+                    "selected": false,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "PBFA97CFB590B2093"
+                },
+                "definition": "label_values(crowdsec_alerts_details,origin)",
+                "hide": 0,
+                "includeAll": true,
+                "label": "Origin",
+                "multi": true,
+                "name": "origin",
+                "options": [],
+                "query": {
+                    "qryType": 1,
+                    "query": "label_values(crowdsec_alerts_details,origin)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 0,
+                "type": "query"
+            },
+            {
+                "current": {
+                    "selected": false,
+                    "text": "al-001",
+                    "value": "al-001"
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "PBFA97CFB590B2093"
+                },
+                "definition": "label_values(crowdsec_allowlist_items_detail,allowlistId)",
+                "hide": 2,
+                "includeAll": false,
+                "label": "Allowlist",
+                "multi": false,
+                "name": "allowlist",
+                "options": [],
+                "query": {
+                    "qryType": 1,
+                    "query": "label_values(crowdsec_allowlist_items_detail,allowlistId)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 5,
+                "type": "query"
+            },
+            {
+                "current": {
+                    "selected": false,
+                    "text": "dev",
+                    "value": "dev"
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "PBFA97CFB590B2093"
+                },
+                "definition": "label_values(crowdsec_exporter_info,version)",
+                "hide": 2,
+                "includeAll": false,
+                "label": "Version",
+                "multi": false,
+                "name": "version",
+                "options": [],
+                "query": {
+                    "qryType": 1,
+                    "query": "label_values(crowdsec_exporter_info,version)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 0,
+                "type": "query"
+            },
+            {
+                "current": {
+                    "selected": false,
+                    "text": "local",
+                    "value": "local"
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "PBFA97CFB590B2093"
+                },
+                "definition": "label_values(crowdsec_exporter_info,git_commit)",
+                "hide": 2,
+                "includeAll": false,
+                "label": "Commit",
+                "multi": false,
+                "name": "commit",
+                "options": [],
+                "query": {
+                    "qryType": 1,
+                    "query": "label_values(crowdsec_exporter_info,git_commit)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 0,
+                "type": "query"
+            }
+        ]
+    },
+    "time": {
+        "from": "now-6h",
+        "to": "now"
+    },
+    "timepicker": {
+        "hidden": false,
+        "refresh_intervals": [
+            "10s",
+            "30s",
+            "1m",
+            "5m"
+        ]
+    },
+    "timezone": "browser",
+    "title": "Cyberthreat Insights",
+    "uid": "afs37slvy77k0d",
+    "version": 19,
+    "weekStart": ""
+}
