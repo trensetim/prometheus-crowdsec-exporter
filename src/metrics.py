@@ -116,11 +116,11 @@ def createAllowlistsPollErrorsTotal() -> CounterMetricFamily:
     )
 
 # --- Exporter infos ---
-def createExporterInfo() -> InfoMetricFamily:
-    return InfoMetricFamily(
-        "crowdsec_exporter",
-        "Static build and version metadata for this exporter instance. "
-        "Use in dashboard title: 'Version: {{ crowdsec_exporter_info }}'",
+def createExporterInfo() -> GaugeMetricFamily:
+    return GaugeMetricFamily(
+        "crowdsec_exporter_info",
+        "Static build and version metadata for this exporter instance. ",
+        labels=["version",  "git_commit"],
     )
 
 def createPollErrorsTotal() -> InfoMetricFamily:

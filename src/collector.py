@@ -44,7 +44,10 @@ class CrowdSecCollector(Collector):
 
     def collect(self) -> Iterable[Metric]:
         self._pollErrorsTotal = metrics.createPollErrorsTotal()
-        yield metrics.createExporterInfo()
+
+        exporterInfo = metrics.createExporterInfo()
+        exporterInfo.add_metric([self._config.appVersion, self._config.gitCommit], 1)
+        yield exporterInfo
 
         yield from self._collectDecisions()
         yield from self._collectAllowlists()
