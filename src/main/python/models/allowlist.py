@@ -99,7 +99,7 @@ class Allowlist:
     def metric_labels() -> list[str]:
         return [
             "name",
-            "id",
+            "allowlist_id",
             "console_managed",
             "description",
             "created_at",
@@ -117,21 +117,21 @@ class Allowlist:
         ]
 
     @staticmethod
-    def created_metrics_labels() -> list[str]:
-        return ["name", "id"]
+    def created_metric_labels() -> list[str]:
+        return ["name", "allowlist_id"]
 
-    def created_metrics_label_values(self) -> list[str]:
+    def created_metric_label_values(self) -> list[str]:
         return [self.name, self.id]
 
     @staticmethod
-    def updated_metrics_labels() -> list[str]:
-        return Allowlist.created_metrics_labels()
-    def updated_metrics_label_values(self) -> list[str]:
-        return self.created_metrics_label_values()
+    def updated_metric_labels() -> list[str]:
+        return Allowlist.created_metric_labels()
+    def updated_metric_label_values(self) -> list[str]:
+        return self.created_metric_label_values()
 
     @staticmethod
-    def console_managed_metrics_labels() -> list[str]:
+    def console_managed_metric_labels() -> list[str]:
         return ["console_managed"]
-    def console_managed_metrics_label_values(self) -> list[str]:
+    def console_managed_metric_label_values(self) -> list[str]:
         return [str(self.console_managed).lower()]
 

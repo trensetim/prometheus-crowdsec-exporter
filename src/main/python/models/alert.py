@@ -1,6 +1,7 @@
+from typing import Type
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from models._base import (
@@ -11,28 +12,29 @@ from models._base import (
 )
 from models.decision import Decision
 
+# pylint: disable=too-many-instance-attributes
 @dataclass(frozen = True)
 class AlertSource:
     scope: str
     value: str
     ip: str
     range: str
-    asNumber: str
-    asName: str
+    as_number: str
+    as_name: str
     country: str
     latitude: float
     longitude: float
 
     @classmethod
-    def mapClassFromApiDict(cls, raw: dict[str, Any]) -> "AlertSource":
+    def parse(cls, raw: dict[str, Any]) -> "AlertSource":
         if not isinstance(raw, dict):
             return cls(
                 scope = "",
                 value = "",
                 ip = "",
                 range = "",
-                asNumber = "",
-                asName = "",
+                as_number = "",
+                as_name = "",
                 country = "",
                 latitude = 0.0,
                 longitude = 0.0
@@ -43,8 +45,8 @@ class AlertSource:
             value = strField(raw, "value", ""),
             ip = strField(raw, "ip", ""),
             range = strField(raw, "range", ""),
-            asNumber= strField(raw, "as_number", ""),
-            asName = strField(raw, "as_name", ""),
+            as_number= strField(raw, "as_number", ""),
+            as_name = strField(raw, "as_name", ""),
             country = strField(raw, "cn", ""),
             latitude = float(raw.get("latitude") or 0.0),
             longitude = float(raw.get("longitude") or 0.0),
@@ -57,16 +59,16 @@ class AlertEvent:
     meta: dict
 
     @classmethod
-    def mapClassFromApiDict(cls, raw: dict[str, Any]) -> "AlertEvent | None":
+    def parse(cls, raw: dict[str, Any]) -> "AlertEvent | None":
         if not isinstance(raw, dict):
             return None
 
         return cls(
             timestamp = intField(raw, "timestamp"),
-            meta = _parseMeta(raw.get("meta"))
+            meta = _parse_meta(raw.get("meta"))
         )
 
-
+# pylint: disable=too-many-instance-attributes
 @dataclass(frozen=True)
 class Alert:
     scenario: str
@@ -74,100 +76,131 @@ class Alert:
     remediation: bool
     id: int
     uuid: str
-    machineId: str
-    createdAt: datetime | None
-    scenarioHash: str
-    scenarioVersion: str
+    machine_id: str
+    created_at: datetime
+    scenario_hash: str
+    scenario_version: str
     message: str
-    eventsCount: int
-    startAt: datetime | None
-    stopAt: datetime | None
+    events_count: int
+    start_at: datetime
+    stop_at: datetime
     capacity: int
     leakspeed: str
     events: tuple[AlertEvent, ...]
     decisions: tuple[Decision, ...]
-    source: AlertSource | None
+    source: AlertSource
     meta: dict
     labels: tuple[str, ...]
     kind: str
 
     @classmethod
-    def parse(cls, raw: dict[str, Any]) -> "Alert | None":
+    def parse(cls: Type["Alert"], raw: dict[str, Any]) -> "Alert | None":
         if not isinstance(raw, dict):
             raise ValueError("Alert is not a dict")
 
+        events = raw.get("events") or []
+        events = tuple(AlertEvent.parse(re) for re in events)
 
-        rawEvents = raw.get("events") or []
-        events = tuple(AlertEvent.mapClassFromApiDict(re) for re in rawEvents)
-
-        rawDecisions = raw.get("decisions") or []
+        decisions = raw.get("decisions") or []
         decisions = tuple(
-            item for rd in rawDecisions
+            item for rd in decisions
             if (item := Decision.parse(rd)) is not None
         )
 
         return cls(
             id = intField(raw, "id"),
             uuid = strField(raw, "uuid", ""),
-            machineId = strField(raw, "machine_id", ""),
-            createdAt = datetimeField(raw, "created_at"),
+            machine_id = strField(raw, "machine_id", ""),
+            created_at = datetimeField(raw, "created_at") or datetime.fromtimestamp(0, tz=timezone.utc),
             scenario = strField(raw, "scenario"),
-            scenarioHash = strField(raw, "scenario_hash", ""),
-            scenarioVersion = strField(raw, "scenario_version", ""),
+            scenario_hash = strField(raw, "scenario_hash", ""),
+            scenario_version = strField(raw, "scenario_version", ""),
             message = strField(raw, "message", ""),
-            eventsCount = intField(raw, "events_count"),
-            startAt = datetimeField(raw, "start_at"),
-            stopAt = datetimeField(raw, "stop_at"),
+            events_count = intField(raw, "events_count"),
+            start_at = datetimeField(raw, "start_at") or datetime.fromtimestamp(0, tz=timezone.utc),
+            stop_at = datetimeField(raw, "stop_at") or datetime.fromtimestamp(0, tz=timezone.utc),
             capacity = intField(raw, "capacity"),
             leakspeed = strField(raw, "leakspeed"),
             simulated = boolField(raw, "simulated"),
             events = events,
             remediation = boolField(raw, "remediation"),
             decisions = decisions,
-            source = AlertSource.mapClassFromApiDict(raw.get("source")),
-            meta = _parseMeta(raw.get("meta")),
+            source = AlertSource.parse(raw.get("source")),
+            meta = _parse_meta(raw.get("meta")),
             labels = tuple(str(l) for l in (raw.get("labels") or []) if l),
             kind = strField(raw, "kind"),
         )
 
-    def metricLabels(self) -> dict[str, str]:
-        return {
-            "scenario": self.scenario,
-            "simulated": str(self.simulated).lower(),
-            "remediation": str(self.remediation).lower(),
-        }
+    @staticmethod
+    def metric_labels() -> list[str]:
+        return [
+            "id",
+            "uuid",
+            "machine_id",
+            "scenario",
+            "scenario_hash",
+            "scenario_version",
+            "simulated",
+            "remediation",
+            "ip",
+            "subnet",
+            "country",
+            "as_number",
+            "as_name",
+            "latitude",
+            "longitude",
+            "decision_type",
+            "decision_scope",
+        ]
 
-    def metricDetails(self) -> dict[str, str]:
-        return {
-            "alertIdentifier": str(self.id),
-            "uuid": self.uuid,
-            "machineId": self.machineId,
-            "createdAt": self.createdAt.isoformat() if self.createdAt else "",
-            "startAt": self.startAt.isoformat() if self.startAt else "",
-            "stopAt": self.stopAt.isoformat() if self.stopAt else "",
-            "scenario": self.scenario,
-            "scenarioHash": self.scenarioHash,
-            "scenarioVersion": self.scenarioVersion,
-            "eventsCount": str(self.eventsCount),
-            "simulated": str(self.simulated).lower(),
-            "remediation": str(self.remediation).lower(),
-            "ip": self.source.ip if self.source else "",
-            "subnet": self.source.range if self.source else "",
-            "country": self.source.country if self.source else "",
-            "asNumber": self.source.asNumber if self.source else "",
-            "asName": self.source.asName if self.source else "",
-            "latitude": str(self.source.latitude) if self.source else "",
-            "longitude": str(self.source.longitude) if self.source else "",
-            "decisionType": self.decisions[0].type if self.decisions else "",
-            "decisionScope": self.decisions[0].scope if self.decisions else "",
-        }
+    def metric_label_values(self) -> list[str]:
+        return [
+            str(self.id),
+            self.uuid,
+            self.machine_id,
+            self.scenario,
+            self.scenario_hash,
+            self.scenario_version,
+            str(self.simulated).lower(),
+            str(self.remediation).lower(),
+            self.source.ip,
+            self.source.range,
+            self.source.country,
+            self.source.as_number,
+            self.source.as_name,
+            str(self.source.latitude),
+            str(self.source.longitude),
+            self.decisions[0].type if self.decisions else "",
+            self.decisions[0].scope if self.decisions else "",
+        ]
 
-def _parseMeta(rawMeta: Any) -> dict[str, str]:
-    if not isinstance(rawMeta, list):
+    @staticmethod
+    def created_metric_labels() -> list[str]:
+        return ["id", "uuid"]
+    def created_metric_label_values(self) -> list[str]:
+        return [str(self.id), self.uuid]
+    @staticmethod
+    def start_metric_labels() -> list[str]:
+        return Alert.created_metric_labels()
+    def start_metric_label_values(self) -> list[str]:
+        return self.created_metric_label_values()
+    @staticmethod
+    def stop_metric_labels() -> list[str]:
+        return Alert.created_metric_labels()
+    def stop_metric_label_values(self) -> list[str]:
+        return self.created_metric_label_values()
+    @staticmethod
+    def events_count_metric_labels() -> list[str]:
+        return Alert.created_metric_labels()
+    def events_count_metric_label_values(self) -> list[str]:
+        return self.created_metric_label_values()
+
+def _parse_meta(raw: Any) -> dict[str, str]:
+    if not isinstance(raw, list):
         return {}
 
     return {
         str(item["key"]): str(item["value"])
-        for item in rawMeta
+        for item in raw
         if isinstance(item, dict) and "key" in item and "value" in item
     }

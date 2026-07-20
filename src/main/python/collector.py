@@ -39,6 +39,8 @@ class CrowdSecCollector(Collector):
 
     _last_decision_ids: set[str] = set()
     """UUIDs of the decisions of last poll, to prevent double-counting"""
+    _last_alert_ids: set[str] = set()
+    """UUIDs of the alerts of last poll, to prevent double-counting"""
     _last_allowlist_ids: set[str] = set()
     """IDs of the allowlists of last poll, to prevent double-counting"""
     _last_allowlist_items: set[str] = set()
@@ -48,6 +50,7 @@ class CrowdSecCollector(Collector):
     _metric_poll_errors_total: int = 0
     _metric_last_poll_duration_seconds: float = 0
     _metric_decisions_total: int = 0
+    _metric_alerts_total: int = 0
     _metric_allowlists_total: int = 0
     _metric_allowlist_items_total: int = 0
 
@@ -55,7 +58,6 @@ class CrowdSecCollector(Collector):
         self._session = _open_session(config.apiKey, config.version)
         self._base_url = config.crowdSecLapiURL.rstrip("/")
         self._config_version = config.version
-        self._alertsFetchedCounter = 0
         log.info("collector_initialised", lapi_url=self._base_url)
 
     def collect(self) -> Iterable[Metric]:
@@ -68,6 +70,12 @@ class CrowdSecCollector(Collector):
 
         yield self._collect_decisions()
         yield self._collect_decisions_total()
+        yield self._collect_alerts()
+        yield self._collect_alerts_total()
+        yield self._collect_alert_created()
+        yield self._collect_alert_start()
+        yield self._collect_alert_stop()
+        yield self._collect_alert_events_count()
         yield self._collect_allowlists()
         yield self._collect_allowlists_total()
         yield self._collect_allowlist_created()
@@ -77,8 +85,6 @@ class CrowdSecCollector(Collector):
         yield self._collect_allowlist_items_total()
         yield self._collect_allowlist_item_created()
         yield self._collect_allowlist_item_expiration()
-        yield from self._collectAlerts()
-
 
     def poll(self):
         """
@@ -97,8 +103,8 @@ class CrowdSecCollector(Collector):
             return parser(raw)
 
         try:
-            self._allowlists = _poll_single_endpoint("allowlists", parse_allowlists)
-            self._decisions = _poll_single_endpoint("decisions", parse_decisions)
+            self._allowlists = _poll_single_endpoint("allowlists", parse_allowlists) # todo: this needs JWT auth as a "maschine"
+            self._decisions = _poll_single_endpoint("decisions", parse_decisions) # note: this needs X-Api-Key auth as a "bouncer"
             self._alerts = _poll_single_endpoint("alerts", parse_alerts)
         except Exception as err: # pylint: disable=broad-exception-caught
             log.warning("pollFailed", error = err)
@@ -134,19 +140,19 @@ class CrowdSecCollector(Collector):
     def _collect_allowlist_created(self) -> Metric:
         m = metrics.allowlist_created()
         for al in self._allowlists:
-            m.add_metric(al.created_metrics_label_values(), al.created_at.timestamp())
+            m.add_metric(al.created_metric_label_values(), al.created_at.timestamp())
         return m
 
     def _collect_allowlist_updated(self) -> Metric:
         m = metrics.allowlist_updated()
         for al in self._allowlists:
-            m.add_metric(al.updated_metrics_label_values(), al.updated_at.timestamp())
+            m.add_metric(al.updated_metric_label_values(), al.updated_at.timestamp())
         return m
 
     def _collect_allowlist_console_managed(self) -> Metric:
         m = metrics.allowlist_console_managed()
         for al in self._allowlists:
-            m.add_metric(al.console_managed_metrics_label_values(), 1 if al.console_managed else 0)
+            m.add_metric(al.console_managed_metric_label_values(), 1 if al.console_managed else 0)
         return m
 
     def _collect_allowlists_total(self) -> Metric:
@@ -183,85 +189,41 @@ class CrowdSecCollector(Collector):
                 allowlist_items.add_metric(item.expiration_metric_label_values(al.id), item.expiration.timestamp())
         return allowlist_items
 
-    def _collectAlerts(self) -> Iterable[Metric]:
-        # create new metrics
-        # cant use existing metrics cause it would append the new data
-        activeAlerts = metrics.createActiveAlerts()
-        activeAlertsDetails = metrics.createActiveAlertsDetails()
-        alertsFetchedTotal = metrics.createAlertsFetchedTotal()
+    def _collect_alerts(self) -> Metric:
+        alerts = metrics.alerts()
+        for a in self._alerts:
+            alerts.add_metric(a.metric_label_values(), 1)
+        return alerts
 
-        self._alertsFetchedCounter += len(self._alerts)
-        alertsFetchedTotal.add_metric([], self._alertsFetchedCounter )
-        yield alertsFetchedTotal
+    def _collect_alert_created(self) -> Metric:
+        alerts = metrics.alert_created()
+        for a in self._alerts:
+            alerts.add_metric(a.created_metric_label_values(), a.created_at.timestamp())
+        return alerts
 
-        # add metric
-        labels = self._getAlertsLabels(self._alerts)
-        for (scenario, simulated, remediation), count in labels.items():
-            activeAlerts.add_metric([scenario, simulated, remediation], count)
+    def _collect_alert_start(self) -> Metric:
+        alerts = metrics.alert_start()
+        for a in self._alerts:
+            alerts.add_metric(a.start_metric_label_values(), a.start_at.timestamp())
+        return alerts
 
-        yield activeAlerts
-        log.debug(
-            "alertsGaugeUpdated",
-            labelCombinations = len(labels),
-            total = sum(labels.values())
-        )
+    def _collect_alert_stop(self) -> Metric:
+        alerts = metrics.alert_stop()
+        for a in self._alerts:
+            alerts.add_metric(a.stop_metric_label_values(), a.stop_at.timestamp())
+        return alerts
 
-        details = self._getAlertsDetails(self._alerts)
-        for (alertId,uuid,machineId,createdAt,startAt,stopAt,scenario,scenarioHash,scenarioVersion,eventsCount,simulated,remediation,ip,subnet,country,asNumber,asName,latitude,longitude,decisionType,decisionScope), count in details.items():
-            activeAlertsDetails.add_metric([
-                alertId,
-                uuid,
-                machineId,
-                createdAt,
-                startAt,
-                stopAt,
-                scenario,
-                scenarioHash,
-                scenarioVersion,
-                eventsCount,
-                simulated,
-                remediation,
-                ip,
-                subnet,
-                country,
-                asNumber,
-                asName,
-                latitude,
-                longitude,
-                decisionType,
-                decisionScope
-                ],
-                count
-            )
+    def _collect_alert_events_count(self) -> Metric:
+        alerts = metrics.alert_events_count()
+        for a in self._alerts:
+            alerts.add_metric(a.events_count_metric_label_values(), a.events_count)
+        return alerts
 
-        yield activeAlertsDetails
-        log.debug(
-            "alertsDetailsGaugeUpdated",
-            labelCombinations = len(details),
-            total = sum(details.values())
-        )
-
-    def _getAlertsLabels(self, alerts: list[Alert]) -> dict[tuple, int]:
-        aggregated: dict[tuple, int] = defaultdict(int)
-        for a in alerts:
-            aggregated[tuple(a.metricLabels().values())] += 1
-            log.debug(
-                "alertsObserved",
-                **a.metricLabels(),
-                alertId = a.id
-            )
-        return aggregated
-
-    def _getAlertsDetails(self, alerts: list[Alert]) -> dict[tuple, int]:
-        aggregated: dict[tuple, int] = defaultdict(int)
-        for a in alerts:
-            aggregated[tuple(a.metricDetails().values())] += 1
-            log.debug(
-                "alertsDetailsObserved",
-                **a.metricDetails(),
-                alertId = a.id
-            )
-        return aggregated
+    def _collect_alerts_total(self) -> Metric:
+        new_alerts = [a for a in self._alerts if a.uuid not in self._last_alert_ids]
+        self._metric_alerts_total += len(new_alerts)
+        self._last_alert_ids = {a.uuid for a in self._alerts}
+        return metrics.alerts_total(self._metric_alerts_total)
 
     def _fetch(self, endpoint: str, path: str) -> list:
         try:

@@ -1,13 +1,13 @@
 from prometheus_client.metrics_core import GaugeMetricFamily, CounterMetricFamily, InfoMetricFamily
 
-from models import Decision, Allowlist, AllowlistItem
+from models import Decision, Allowlist, AllowlistItem, Alert
 
 # --- Decisions ---
 def decisions() -> GaugeMetricFamily:
     return GaugeMetricFamily(
         "crowdsec_decisions",
         "Number of currently active CrowdSec decisions",
-        labels = Decision.metric_labels(),
+        labels=Decision.metric_labels(),
     )
 
 def decisions_total(current_total: int) -> CounterMetricFamily:
@@ -18,56 +18,48 @@ def decisions_total(current_total: int) -> CounterMetricFamily:
     m.add_metric([], current_total)
     return m
 
-def createLastSuccessfulDecisionPollTimestamp() -> CounterMetricFamily:
-    return GaugeMetricFamily(
-        "crowdsec_last_successful_decision_poll_timestamp_seconds",
-        "Unix timestamp (UTC) of the last successful poll per endpoint",
-        labels=["endpoint"],
-    )
-
-def createDecisionPollErrorsTotal() -> CounterMetricFamily:
-    return CounterMetricFamily(
-        "crowdsec_poll_errors_total",
-        "Total failed LAPI poll attempts",
-        labels=["endpoint", "error_type"],
-    )
-
 # --- Alerts ---
-def createActiveAlerts() -> GaugeMetricFamily :
+def alerts() -> GaugeMetricFamily :
     return GaugeMetricFamily(
         "crowdsec_alerts",
-        "Number of currently active CrowdSec alerts",
-        labels=["scenario", "simulated", "remediation"],
-    )
-
-def createActiveAlertsDetails() -> GaugeMetricFamily :
-    return GaugeMetricFamily(
-        "crowdsec_alerts_details",
         "Details of currently active CrowdSec alerts",
-        labels=["alertId","uuid","machineId","createdAt","startAt","stopAt","scenario","scenarioHash","scenarioVersion","eventsCount","simulated","remediation","ip","subnet","country","asNumber","asName","latitude","longitude","decisionType","decisionScope",],
+        labels=Alert.metric_labels(),
     )
 
-def createAlertsFetchedTotal() -> CounterMetricFamily:
-    return CounterMetricFamily(
-        "crowdsec_alerts_fetched_total",
-        "Total alerts fetched from /v1/alerts since exporter start. "
-        "Use rate() for alert spike detection.",
+def alerts_total(current_total: int) -> CounterMetricFamily:
+    m = CounterMetricFamily(
+        "crowdsec_alerts_total",
+        "Total alerts fetched from /v1/alerts since exporter start"
     )
+    m.add_metric([], current_total)
+    return m
 
-def createLastSuccessfulAlertsPollTimestamp() -> CounterMetricFamily:
+def alert_created() -> GaugeMetricFamily:
     return GaugeMetricFamily(
-        "crowdsec_last_successful_alerts_poll_timestamp_seconds",
-        "Unix timestamp (UTC) of the last successful poll per endpoint",
-        labels=["endpoint"],
+        "crowdsec_alert_created",
+        "Timestamp of the creation of each CrowdSec alert",
+        labels=Alert.created_metric_labels(),
     )
 
-def createAlertsPollErrorsTotal() -> CounterMetricFamily:
-    return CounterMetricFamily(
-        "crowdsec_poll_errors_total",
-        "Total failed LAPI poll attempts",
-        labels=["endpoint", "errorType"],
+def alert_start() -> GaugeMetricFamily:
+    return GaugeMetricFamily(
+        "crowdsec_alert_start",
+        "Timestamp of the start of each CrowdSec alert",
+        labels=Alert.start_metric_labels(),
     )
 
+def alert_stop() -> GaugeMetricFamily:
+    return GaugeMetricFamily(
+        "crowdsec_alert_stop",
+        "Timestamp of the stop of each CrowdSec alert",
+        labels=Alert.stop_metric_labels(),
+    )
+def alert_events_count() -> GaugeMetricFamily:
+    return GaugeMetricFamily(
+        "crowdsec_alert_events_count",
+        "Number of events for each CrowdSec alert",
+        labels=Alert.events_count_metric_labels(),
+    )
 # --- Allowlists ---
 def allowlists() -> GaugeMetricFamily:
     return GaugeMetricFamily(
@@ -80,21 +72,21 @@ def allowlist_created() -> GaugeMetricFamily:
     return GaugeMetricFamily(
         "crowdsec_allowlist_created",
         "Timestamp of the creation of each CrowdSec allowlist",
-        labels=Allowlist.metric_labels(),
+        labels=Allowlist.created_metric_labels(),
     )
 
 def allowlist_updated() -> GaugeMetricFamily:
     return GaugeMetricFamily(
         "crowdsec_allowlist_updated",
         "Timestamp of the last update of each CrowdSec allowlist",
-        labels=Allowlist.metric_labels(),
+        labels=Allowlist.updated_metric_labels(),
     )
 
 def allowlist_console_managed() -> GaugeMetricFamily:
     return GaugeMetricFamily(
         "crowdsec_allowlist_console_managed",
         "Indicates whether each CrowdSec allowlist is console managed",
-        labels=Allowlist.console_managed_metrics_labels(),
+        labels=Allowlist.console_managed_metric_labels(),
     )
 
 def allowlists_total(current_total: int) -> CounterMetricFamily:
