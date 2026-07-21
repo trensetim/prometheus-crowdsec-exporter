@@ -26,13 +26,12 @@ def alerts() -> GaugeMetricFamily :
         labels=Alert.metric_labels(),
     )
 
-def alerts_total(current_total: int) -> CounterMetricFamily:
-    m = CounterMetricFamily(
+def alerts_total() -> CounterMetricFamily:
+    return CounterMetricFamily(
         "crowdsec_alerts_total",
-        "Total alerts fetched from /v1/alerts since exporter start"
+        "Total alerts fetched from /v1/alerts since exporter start",
+        labels=Alert.total_metric_labels()
     )
-    m.add_metric([], current_total)
-    return m
 
 def alert_created() -> GaugeMetricFamily:
     return GaugeMetricFamily(

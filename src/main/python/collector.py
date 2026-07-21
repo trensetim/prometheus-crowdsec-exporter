@@ -34,7 +34,7 @@ class CrowdSecCollector(Collector):
     _metric_poll_errors_total: int = 0
     _metric_last_poll_duration_seconds: float = 0
     _metric_decisions_total: int = 0
-    _metric_alerts_total: int = 0
+    _metric_alerts_total: dict[str, (list[str],int)] = {}
     _metric_allowlists_total: int = 0
     _metric_allowlist_items_total: int = 0
 
@@ -195,6 +195,14 @@ class CrowdSecCollector(Collector):
 
     def _collect_alerts_total(self) -> Metric:
         new_alerts = [a for a in self._alerts if a.uuid not in self._last_alert_ids]
-        self._metric_alerts_total += len(new_alerts)
+        for alert in new_alerts:
+            label_values = alert.total_metric_label_values()
+            key = hash(",".join(label_values))
+            existing_count = self._metric_alerts_total.get(key, (label_values, 0))[1]
+            self._metric_alerts_total[key] = (label_values, existing_count + 1)
         self._last_alert_ids = {a.uuid for a in self._alerts}
-        return metrics.alerts_total(self._metric_alerts_total)
+
+        m = metrics.alerts_total()
+        for (label_values, count) in self._metric_alerts_total.values():
+            m.add_metric(label_values, count)
+        return m

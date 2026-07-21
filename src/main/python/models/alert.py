@@ -131,6 +131,14 @@ class Alert:
             kind = strField(raw, "kind"),
         )
 
+    def __eq__(self, value):
+        if not isinstance(value, Alert):
+            return False
+        return self.uuid == value.uuid
+
+    def __hash__(self):
+        return hash(self.uuid)
+
     @staticmethod
     def metric_labels() -> list[str]:
         return [
@@ -194,6 +202,42 @@ class Alert:
         return Alert.created_metric_labels()
     def events_count_metric_label_values(self) -> list[str]:
         return self.created_metric_label_values()
+
+    @staticmethod
+    def total_metric_labels() -> list[str]:
+        return [
+            "scenario",
+            "scenario_hash",
+            "scenario_version",
+            "simulated",
+            "remediation",
+            "ip",
+            "subnet",
+            "country",
+            "as_number",
+            "as_name",
+            "latitude",
+            "longitude",
+            "decision_type",
+            "decision_scope",
+        ]
+    def total_metric_label_values(self) -> list[str]:
+        return [
+            self.scenario,
+            self.scenario_hash,
+            self.scenario_version,
+            str(self.simulated).lower(),
+            str(self.remediation).lower(),
+            self.source.ip,
+            self.source.range,
+            self.source.country,
+            self.source.as_number,
+            self.source.as_name,
+            str(self.source.latitude),
+            str(self.source.longitude),
+            self.decisions[0].type if self.decisions else "",
+            self.decisions[0].scope if self.decisions else "",
+        ]
 
 def _parse_meta(raw: Any) -> dict[str, str]:
     if not isinstance(raw, list):
