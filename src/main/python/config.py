@@ -30,8 +30,11 @@ class Config:
     version: str = _read_version()
     """The current application version"""
 
-    crowdSecLapiURL: str = _read_required_env("CROWDSEC_LAPI_URL")
-    apiKey: str = _read_required_env("CROWDSEC_API_KEY")
-    bindPort: int = _read_bind_port()
-    bindHost: str = os.getenv("BIND_HOST", "0.0.0.0")
-    logLevel: str = os.getenv("LOG_LEVEL", "INFO").upper()
+    local_api_url: str = _read_required_env("CROWDSEC_LAPI_URL")
+    bouncer_api_key: str = _read_required_env("CROWDSEC_BOUNCER_API_KEY")
+    machine_id: str = _read_required_env("CROWDSEC_MACHINE_ID")
+    machine_password: str = _read_required_env("CROWDSEC_MACHINE_PASSWORD")
+    http_timeout_seconds: float = float(os.getenv("CROWDSEC_LAPI_HTTP_TIMEOUT_SECONDS", "10"))
+    bind_port: int = _read_bind_port()
+    bind_host: str = os.getenv("BIND_HOST", "0.0.0.0")
+    log_level: str = os.getenv("LOG_LEVEL", "INFO").upper()

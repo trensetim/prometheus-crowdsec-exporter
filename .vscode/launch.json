@@ -10,11 +10,12 @@
             "cwd": "${workspaceFolder}/src/main/python",
 			"env": {
                 "CROWDSEC_LAPI_URL": "http://localhost:8080",
+                "CROWDSEC_BOUNCER_API_KEY": "aJj0k5/3BU9rT6e4Yhfi9WJ1G3Pq0zAPHuGtf2HykKA",
+                "CROWDSEC_MACHINE_ID": "test",
+                "CROWDSEC_MACHINE_PASSWORD": "GBUXxDyOOptyvMWqykkN5QjwB8HsxVhJcASiDzy7SB4WzTWuK94qrYYad2h2Uh6S",
                 "BIND_PORT": "8001",
-                "POLL_INTERVAL_SECONDS": "15",
                 "LOG_LEVEL": "DEBUG",
-                "APP_VERSION": "dev",
-                "GIT_COMMIT": "local"
+                "APP_VERSION": "0.0.0"
             },
             "envFile": "${workspaceFolder}/src/test/compose/lapi-key.env",
             "preLaunchTask": "prepare-all"

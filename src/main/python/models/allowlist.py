@@ -67,7 +67,7 @@ class AllowlistItem:
 @dataclass(frozen = True)
 class Allowlist:
     name: str
-    id: str
+    id: str # TODO: does not exist
     description: str
     items: list[AllowlistItem]
     created_at: datetime

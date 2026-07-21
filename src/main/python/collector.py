@@ -1,36 +1,20 @@
-from collections import defaultdict
-from collections.abc import Callable
-from typing import TypeVar
-import time
 from typing import Iterable
+import time
 
 from prometheus_client import Metric
 from prometheus_client.registry import Collector
 
-import requests
-
+import metrics
 from config import Config
 from logger import get_logger
-import metrics
-from models import (
-    Alert,
-    Allowlist,
-    Decision,
-    parse_decisions,
-    parse_allowlists,
-    parse_alerts
-)
+from poller import CrowdsecPoller
+from models import Alert, Allowlist, Decision
 
 log = get_logger(__name__)
 
-_HTTP_TIMEOUT = (5.0, 10.0)
-
-_EXPIRY_THRESHOLD_SECONDS = 86_400  # 24h
-
 class CrowdSecCollector(Collector):
 
-    _session: requests.Session
-    _config_version: str
+    _poller: CrowdsecPoller
 
     # parsed responses from the last poll
     _decisions: list[Decision] = []
@@ -55,10 +39,9 @@ class CrowdSecCollector(Collector):
     _metric_allowlist_items_total: int = 0
 
     def __init__(self, config: Config) -> None:
-        self._session = _open_session(config.apiKey, config.version)
-        self._base_url = config.crowdSecLapiURL.rstrip("/")
         self._config_version = config.version
-        log.info("collector_initialised", lapi_url=self._base_url)
+        self._poller = CrowdsecPoller(config)
+        log.info("collector_initialised")
 
     def collect(self) -> Iterable[Metric]:
         self.poll()
@@ -95,29 +78,20 @@ class CrowdSecCollector(Collector):
 
         start = time.monotonic()
 
-        T = TypeVar("T")
-        def _poll_single_endpoint(endpoint: str, parser: Callable[[list[any]], list[T]]) -> list[T]:
-            raw = self._fetch(endpoint, f"/v1/{endpoint}")
-            if raw is None:
-                raise requests.exceptions.ConnectionError(f"No {endpoint} returned from LAPI")
-            return parser(raw)
-
         try:
-            self._allowlists = _poll_single_endpoint("allowlists", parse_allowlists) # todo: this needs JWT auth as a "maschine"
-            self._decisions = _poll_single_endpoint("decisions", parse_decisions) # note: this needs X-Api-Key auth as a "bouncer"
-            self._alerts = _poll_single_endpoint("alerts", parse_alerts)
+            self._allowlists = self._poller.poll_allowlists()
+            self._decisions = self._poller.poll_decisions()
+            self._alerts = self._poller.poll_alerts()
+
+            end = time.monotonic()
+            self._metric_last_poll_duration_seconds = round(end - start, 3)
+            log.info("poll_success", duration_seconds = self._metric_last_poll_duration_seconds)
         except Exception as err: # pylint: disable=broad-exception-caught
-            log.warning("pollFailed", error = err)
             self._metric_poll_errors_total += 1
 
-        end = time.monotonic()
-        self._metric_last_poll_duration_seconds = round(end - start, 3)
-        log.info("pollSuccess",
-            countAllowlists = len(self._allowlists),
-            countDecisions = len(self._decisions),
-            countAlerts = len(self._alerts),
-            durationSeconds = self._metric_last_poll_duration_seconds
-        )
+            end = time.monotonic()
+            self._metric_last_poll_duration_seconds = round(end - start, 3)
+            log.warning("poll_failed", error = err, duration_seconds = self._metric_last_poll_duration_seconds)
 
     def _collect_decisions(self) -> Metric:
         decisions = metrics.decisions()
@@ -224,39 +198,3 @@ class CrowdSecCollector(Collector):
         self._metric_alerts_total += len(new_alerts)
         self._last_alert_ids = {a.uuid for a in self._alerts}
         return metrics.alerts_total(self._metric_alerts_total)
-
-    def _fetch(self, endpoint: str, path: str) -> list:
-        try:
-            response = self._session.get(f"{self._base_url}{path}", timeout = _HTTP_TIMEOUT)
-
-            if response.status_code == 204: # No Content
-                log.debug("pollEmpty", endpoint = endpoint)
-                return []
-
-            response.raise_for_status()
-            data = response.json()
-
-            if not isinstance(data, list):
-                raise ValueError(f"Expected list from {path}, got {type(data).__name__}")
-
-            return data
-        except requests.exceptions.ConnectionError as exc:
-            log.warning("pollFailed", endpoint = endpoint, error_type = "connect", detail = str(exc))
-            raise
-        except requests.exceptions.HTTPError as exc:
-            status = exc.response.status_code if exc.response is not None else "unknown"
-            log.warning("pollFailed", endpoint = endpoint, error_type = "http", http_status = status, detail = str(exc))
-            raise
-        except (ValueError, KeyError) as exc:
-            log.warning("pollFailed", endpoint = endpoint, error_type = "parse", detail = str(exc))
-            raise
-
-def _open_session(api_key: str, version: str) -> requests.Session:
-    """Creates an http session object with adequate headers for polling the CrowdSec LAPI."""
-    session = requests.Session()
-    session.headers.update({
-        "X-Api-Key": api_key,
-        "Accept": "application/json",
-        "User-Agent": f"prometheus-crowdsec-exporter/{version}",
-    })
-    return session

@@ -17,20 +17,20 @@ LOGGER: logging.Logger
 def _log_startup_info():
     LOGGER.info("startup",
         version = CONFIG.version,
-        logLevel = CONFIG.logLevel,
-        port = CONFIG.bindPort,
-        host = CONFIG.bindHost,
-        crowdSecLapiURL = CONFIG.crowdSecLapiURL,
+        log_level = CONFIG.log_level,
+        port = CONFIG.bind_port,
+        host = CONFIG.bind_host,
+        crowdSecLapiURL = CONFIG.local_api_url,
     )
 
 def _init_logging() -> logging.Logger:
-    logger.configure(CONFIG.logLevel)
+    logger.configure(CONFIG.log_level)
     return logger.get_logger("main")
 
 def _start_metrics_server() -> Tuple[WSGIServer, threading.Thread]:
     REGISTRY.register(CrowdSecCollector(CONFIG))
-    result = start_http_server(port = CONFIG.bindPort, addr = CONFIG.bindHost)
-    LOGGER.info("metricsServerStarted", port = CONFIG.bindPort, host = CONFIG.bindHost)
+    result = start_http_server(port = CONFIG.bind_port, addr = CONFIG.bind_host)
+    LOGGER.info("metricsServerStarted", port = CONFIG.bind_port, host = CONFIG.bind_host)
     return result
 
 def _stop_metrics_server(server: Tuple[WSGIServer, threading.Thread]):
