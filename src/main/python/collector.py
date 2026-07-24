@@ -3,28 +3,23 @@ import time
 
 from prometheus_client import Metric
 from prometheus_client.registry import Collector
+from counter import TotalCounterCollection
 
 import metrics
 from config import Config
 from logger import get_logger
 from poller import CrowdsecPoller
-from models import Alert, Allowlist, Decision
+from models import Alert, Allowlist
 
 log = get_logger(__name__)
 
+
+# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-few-public-methods
 class CrowdSecCollector(Collector):
 
     _poller: CrowdsecPoller
 
-    # parsed responses from the last poll
-    _decisions: list[Decision] = []
-    _allowlists: list[Allowlist] = []
-    _alerts: list[Alert] = []
-
-    _last_decision_ids: set[str] = set()
-    """UUIDs of the decisions of last poll, to prevent double-counting"""
-    _last_alert_ids: set[str] = set()
-    """UUIDs of the alerts of last poll, to prevent double-counting"""
     _last_allowlist_ids: set[str] = set()
     """IDs of the allowlists of last poll, to prevent double-counting"""
     _last_allowlist_items: set[str] = set()
@@ -33,43 +28,71 @@ class CrowdSecCollector(Collector):
     _metric_polls_total: int = 0
     _metric_poll_errors_total: int = 0
     _metric_last_poll_duration_seconds: float = 0
-    _metric_decisions_total: int = 0
-    _metric_alerts_total: dict[str, (list[str],int)] = {}
+    _metric_decisions_total: TotalCounterCollection
+    _metric_alerts_total: TotalCounterCollection
+    _metric_events_total: TotalCounterCollection
     _metric_allowlists_total: int = 0
     _metric_allowlist_items_total: int = 0
 
     def __init__(self, config: Config) -> None:
         self._config_version = config.version
         self._poller = CrowdsecPoller(config)
+        self._metric_decisions_total = TotalCounterCollection()
+        self._metric_alerts_total = TotalCounterCollection()
+        self._metric_events_total = TotalCounterCollection()
         log.info("collector_initialised")
 
+        if not config.metrics_retain_startup_increment:
+            # this is the "default" behavior, to avoid counter resets after exporter restarts
+            (alerts, _) = self._poll()
+            self._update_alerts_totals(
+                alerts,
+                self._metric_alerts_total,
+                self._metric_events_total,
+                self._metric_decisions_total,
+                reset_at_start=False
+            )
+            log.info("collector_startup_increment_discarded", alerts_count=len(alerts))
+
     def collect(self) -> Iterable[Metric]:
-        self.poll()
+        (alerts, allowlists) = self._poll() or ([], [])
+
+        self._update_alerts_totals(
+            alerts,
+            self._metric_alerts_total,
+            self._metric_events_total,
+            self._metric_decisions_total,
+            reset_at_start=True
+        )
 
         yield metrics.exporter_info(self._config_version)
         yield metrics.polls_total(self._metric_polls_total)
         yield metrics.poll_errors_total(self._metric_poll_errors_total)
         yield metrics.last_poll_duration_seconds(self._metric_last_poll_duration_seconds)
 
-        yield self._collect_decisions()
-        yield self._collect_decisions_total()
-        yield self._collect_alerts()
-        yield self._collect_alerts_total()
-        yield self._collect_alert_created()
-        yield self._collect_alert_start()
-        yield self._collect_alert_stop()
-        yield self._collect_alert_events_count()
-        yield self._collect_allowlists()
-        yield self._collect_allowlists_total()
-        yield self._collect_allowlist_created()
-        yield self._collect_allowlist_updated()
-        yield self._collect_allowlist_console_managed()
-        yield self._collect_allowlist_items()
-        yield self._collect_allowlist_items_total()
-        yield self._collect_allowlist_item_created()
-        yield self._collect_allowlist_item_expiration()
+        yield self._collect_decisions(alerts)
+        yield self._collect_decisions_total(self._metric_decisions_total)
+        yield self._collect_alerts(alerts)
+        yield self._collect_alerts_total(self._metric_alerts_total)
+        yield self._collect_alert_created(alerts)
+        yield self._collect_alert_start(alerts)
+        yield self._collect_alert_stop(alerts)
+        yield self._collect_alert_events_count(alerts)
+        yield self._collect_events_total(self._metric_events_total)
+        yield self._collect_allowlists(allowlists)
+        yield self._collect_allowlists_total(allowlists)
+        yield self._collect_allowlist_created(allowlists)
+        yield self._collect_allowlist_updated(allowlists)
+        yield self._collect_allowlist_console_managed(allowlists)
+        yield self._collect_allowlist_items(allowlists)
+        yield self._collect_allowlist_items_total(allowlists)
+        yield self._collect_allowlist_item_created(allowlists)
+        yield self._collect_allowlist_item_expiration(allowlists)
 
-    def poll(self):
+        self._last_allowlist_ids = {a.id for a in allowlists}
+        self._last_allowlist_items = {item.value for allowlist in allowlists for item in allowlist.items}
+
+    def _poll(self) -> tuple[list[Alert], list[Allowlist]] | None:
         """
         Connects with the CrowdSec LAPI and fetches+parses the relevant data.
         Errors are logged and turned into a ..._poll_errors_total metric.
@@ -79,130 +102,138 @@ class CrowdSecCollector(Collector):
         start = time.monotonic()
 
         try:
-            self._allowlists = self._poller.poll_allowlists()
-            self._decisions = self._poller.poll_decisions()
-            self._alerts = self._poller.poll_alerts()
+            allowlists = self._poller.poll_allowlists()
+            alerts = self._poller.poll_alerts()
 
             end = time.monotonic()
             self._metric_last_poll_duration_seconds = round(end - start, 3)
             log.info("poll_success", duration_seconds = self._metric_last_poll_duration_seconds)
+            return (alerts, allowlists)
         except Exception as err: # pylint: disable=broad-exception-caught
             self._metric_poll_errors_total += 1
 
             end = time.monotonic()
             self._metric_last_poll_duration_seconds = round(end - start, 3)
             log.warning("poll_failed", error = err, duration_seconds = self._metric_last_poll_duration_seconds)
+            return None
 
-    def _collect_decisions(self) -> Metric:
-        decisions = metrics.decisions()
-        for d in self._decisions:
-            decisions.add_metric(d.metric_label_values(), 1)
-        return decisions
+    def _collect_decisions(self, alerts: list[Alert]) -> Metric:
+        m = metrics.decisions()
+        for alert in alerts:
+            for decision in alert.decisions:
+                m.add_metric(decision.metric_label_values(alert_id=alert.id, alert_uuid=alert.uuid), 1, alert.created_at.timestamp())
+        return m
 
-    def _collect_decisions_total(self) -> Metric:
-        new_decisions = [d for d in self._decisions if d.uuid not in self._last_decision_ids]
-        self._metric_decisions_total += len(new_decisions)
-        self._last_decision_ids = {d.uuid for d in self._decisions}
-        return metrics.decisions_total(self._metric_decisions_total)
+    def _collect_allowlists(self, allowlists: list[Allowlist]) -> Metric:
+        m = metrics.allowlists()
+        for al in allowlists:
+            m.add_metric(al.metric_label_values(), 1)
+        return m
 
-    def _collect_allowlists(self) -> Metric:
-        allowlists = metrics.allowlists()
-        for al in self._allowlists:
-            allowlists.add_metric(al.metric_label_values(), 1)
-        return allowlists
-
-    def _collect_allowlist_created(self) -> Metric:
+    def _collect_allowlist_created(self, allowlists: list[Allowlist]) -> Metric:
         m = metrics.allowlist_created()
-        for al in self._allowlists:
+        for al in allowlists:
             m.add_metric(al.created_metric_label_values(), al.created_at.timestamp())
         return m
 
-    def _collect_allowlist_updated(self) -> Metric:
+    def _collect_allowlist_updated(self, allowlists: list[Allowlist]) -> Metric:
         m = metrics.allowlist_updated()
-        for al in self._allowlists:
+        for al in allowlists:
             m.add_metric(al.updated_metric_label_values(), al.updated_at.timestamp())
         return m
 
-    def _collect_allowlist_console_managed(self) -> Metric:
+    def _collect_allowlist_console_managed(self, allowlists: list[Allowlist]) -> Metric:
         m = metrics.allowlist_console_managed()
-        for al in self._allowlists:
+        for al in allowlists:
             m.add_metric(al.console_managed_metric_label_values(), 1 if al.console_managed else 0)
         return m
 
-    def _collect_allowlists_total(self) -> Metric:
-        new_allowlists = [al for al in self._allowlists if al.id not in self._last_allowlist_ids]
+    def _collect_allowlists_total(self, allowlists: list[Allowlist]) -> Metric:
+        new_allowlists = [al for al in allowlists if al.id not in self._last_allowlist_ids]
         self._metric_allowlists_total += len(new_allowlists)
-        self._last_allowlist_ids = {al.id for al in self._allowlists}
         return metrics.allowlists_total(self._metric_allowlists_total)
 
-    def _collect_allowlist_items(self) -> Metric:
-        allowlist_items = metrics.allowlist_items()
-        for al in self._allowlists:
+    def _collect_allowlist_items(self, allowlists: list[Allowlist]) -> Metric:
+        m = metrics.allowlist_items()
+        for al in allowlists:
             for item in al.items:
-                allowlist_items.add_metric(item.metric_label_values(al.id), 1)
-        return allowlist_items
+                m.add_metric(item.metric_label_values(al.id), 1)
+        return m
 
-    def _collect_allowlist_items_total(self) -> Metric:
-        allowlist_item_values_flat = [item.value for al in self._allowlists for item in al.items]
+    def _collect_allowlist_items_total(self, allowlists: list[Allowlist]) -> Metric:
+        allowlist_item_values_flat = [item.value for al in allowlists for item in al.items]
         new_allowlist_item_values = [item_value for item_value in allowlist_item_values_flat if item_value not in self._last_allowlist_items]
         self._metric_allowlist_items_total += len(new_allowlist_item_values)
-        self._last_allowlist_items = allowlist_item_values_flat
         return metrics.allowlist_items_total(self._metric_allowlist_items_total)
 
-    def _collect_allowlist_item_created(self) -> Metric:
-        allowlist_items = metrics.allowlist_item_created()
-        for al in self._allowlists:
+    def _collect_allowlist_item_created(self, allowlists: list[Allowlist]) -> Metric:
+        m = metrics.allowlist_item_created()
+        for al in allowlists:
             for item in al.items:
-                allowlist_items.add_metric(item.created_metric_label_values(al.id), item.created_at.timestamp())
-        return allowlist_items
-
-    def _collect_allowlist_item_expiration(self) -> Metric:
-        allowlist_items = metrics.allowlist_item_expiration()
-        for al in self._allowlists:
-            for item in al.items:
-                allowlist_items.add_metric(item.expiration_metric_label_values(al.id), item.expiration.timestamp())
-        return allowlist_items
-
-    def _collect_alerts(self) -> Metric:
-        alerts = metrics.alerts()
-        for a in self._alerts:
-            alerts.add_metric(a.metric_label_values(), 1)
-        return alerts
-
-    def _collect_alert_created(self) -> Metric:
-        alerts = metrics.alert_created()
-        for a in self._alerts:
-            alerts.add_metric(a.created_metric_label_values(), a.created_at.timestamp())
-        return alerts
-
-    def _collect_alert_start(self) -> Metric:
-        alerts = metrics.alert_start()
-        for a in self._alerts:
-            alerts.add_metric(a.start_metric_label_values(), a.start_at.timestamp())
-        return alerts
-
-    def _collect_alert_stop(self) -> Metric:
-        alerts = metrics.alert_stop()
-        for a in self._alerts:
-            alerts.add_metric(a.stop_metric_label_values(), a.stop_at.timestamp())
-        return alerts
-
-    def _collect_alert_events_count(self) -> Metric:
-        alerts = metrics.alert_events_count()
-        for a in self._alerts:
-            alerts.add_metric(a.events_count_metric_label_values(), a.events_count)
-        return alerts
-
-    def _collect_alerts_total(self) -> Metric:
-        new_alerts = [a for a in self._alerts if a.uuid not in self._last_alert_ids]
-        for alert in new_alerts:
-            label_values = alert.total_metric_label_values()
-            key = hash(",".join(label_values))
-            existing_count = self._metric_alerts_total.get(key, (label_values, 0))[1]
-            self._metric_alerts_total[key] = (label_values, existing_count + 1)
-        self._last_alert_ids = {a.uuid for a in self._alerts}
-
-        m = metrics.alerts_total()
-        for (label_values, count) in self._metric_alerts_total.values():
-            m.add_metric(label_values, count)
+                m.add_metric(item.created_metric_label_values(al.id), item.created_at.timestamp())
         return m
+
+    def _collect_allowlist_item_expiration(self, allowlists: list[Allowlist]) -> Metric:
+        m = metrics.allowlist_item_expiration()
+        for al in allowlists:
+            for item in al.items:
+                m.add_metric(item.expiration_metric_label_values(al.id), item.expiration.timestamp())
+        return m
+
+    def _collect_alerts(self, alerts: list[Alert]) -> Metric:
+        m = metrics.alerts()
+        for a in alerts:
+            m.add_metric(a.metric_label_values(), 1, a.created_at.timestamp())
+        return m
+
+    def _collect_alert_created(self, alerts: list[Alert]) -> Metric:
+        m = metrics.alert_created()
+        for a in alerts:
+            m.add_metric(a.created_metric_label_values(), a.created_at.timestamp())
+        return m
+
+    def _collect_alert_start(self, alerts: list[Alert]) -> Metric:
+        m = metrics.alert_start()
+        for a in alerts:
+            m.add_metric(a.start_metric_label_values(), a.start_at.timestamp())
+        return m
+
+    def _collect_alert_stop(self, alerts: list[Alert]) -> Metric:
+        m = metrics.alert_stop()
+        for a in alerts:
+            m.add_metric(a.stop_metric_label_values(), a.stop_at.timestamp())
+        return m
+
+    def _collect_alert_events_count(self, alerts: list[Alert]) -> Metric:
+        m = metrics.alert_events_count()
+        for a in alerts:
+            m.add_metric(a.events_count_metric_label_values(), a.events_count)
+        return m
+
+    def _collect_alerts_total(self, totals: TotalCounterCollection) -> Metric:
+        m = metrics.alerts_total()
+        totals.collect(m)
+        return m
+
+    def _collect_events_total(self, totals: TotalCounterCollection) -> Metric:
+        m = metrics.alert_events_count_total()
+        totals.collect(m)
+        return m
+
+    def _collect_decisions_total(self, totals: TotalCounterCollection) -> Metric:
+        m = metrics.decisions_total()
+        totals.collect(m)
+        return m
+
+    def _update_alerts_totals(self,
+            alerts: list[Alert],
+            alerts_totals: TotalCounterCollection,
+            events_totals: TotalCounterCollection,
+            decisions_totals: TotalCounterCollection,
+            reset_at_start: bool = False
+        ) -> None:
+        for alert in alerts:
+            label_values = alert.total_metric_label_values()
+            alerts_totals.get_or_create(label_values, reset_at_start).increment(1)
+            events_totals.get_or_create(label_values, reset_at_start).increment(alert.events_count)
+            decisions_totals.get_or_create(label_values, reset_at_start).increment(len(alert.decisions))

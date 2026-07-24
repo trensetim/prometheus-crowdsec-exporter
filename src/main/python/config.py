@@ -22,19 +22,40 @@ def _read_version() -> str:
     with open(version_file_path, "r", encoding="utf-8") as version_file:
         return version_file.read().strip()
 
-
-@dataclass(frozen=True)
+# pylint: disable=too-many-instance-attributes
+@dataclass
 class Config:
     """The application-wide configuration, read from environment variables"""
 
-    version: str = _read_version()
+    version: str
     """The current application version"""
 
-    local_api_url: str = _read_required_env("CROWDSEC_LAPI_URL")
-    bouncer_api_key: str = _read_required_env("CROWDSEC_BOUNCER_API_KEY")
-    machine_id: str = _read_required_env("CROWDSEC_MACHINE_ID")
-    machine_password: str = _read_required_env("CROWDSEC_MACHINE_PASSWORD")
-    http_timeout_seconds: float = float(os.getenv("CROWDSEC_LAPI_HTTP_TIMEOUT_SECONDS", "10"))
-    bind_port: int = _read_bind_port()
-    bind_host: str = os.getenv("BIND_HOST", "0.0.0.0")
-    log_level: str = os.getenv("LOG_LEVEL", "INFO").upper()
+    local_api_url: str
+    machine_id: str
+    machine_password: str
+    http_timeout_seconds: float
+
+    bind_port: int
+    bind_host: str
+    log_level: str
+
+    metrics_retain_startup_increment: bool
+    """
+    Whether the initial poll shall be prefixed with zero values,
+    such that PromQL increment()-queries see the initial poll
+    as full increments.
+    This is helpful when the exporter is newly-introduced, to get the first scrape.
+    But afterwards it is better disabled, to avoid double-counting upon exporter restarts.
+    """
+
+    def __init__(self) -> None:
+        self.version = _read_version()
+        self.local_api_url = _read_required_env("CROWDSEC_LAPI_URL")
+        self.machine_id = _read_required_env("CROWDSEC_MACHINE_ID")
+        self.machine_password = _read_required_env("CROWDSEC_MACHINE_PASSWORD")
+        self.http_timeout_seconds = float(os.getenv("CROWDSEC_LAPI_HTTP_TIMEOUT_SECONDS", "10"))
+        self.bind_port = _read_bind_port()
+        self.bind_host = os.getenv("BIND_HOST", "0.0.0.0")
+        self.log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+
+        self.metrics_retain_startup_increment = os.getenv("METRICS_RETAIN_STARTUP_INCREMENT", "false").lower() in ("true", "1", "yes")

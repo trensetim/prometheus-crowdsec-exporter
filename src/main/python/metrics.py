@@ -10,13 +10,12 @@ def decisions() -> GaugeMetricFamily:
         labels=Decision.metric_labels(),
     )
 
-def decisions_total(current_total: int) -> CounterMetricFamily:
-    m = CounterMetricFamily(
+def decisions_total() -> CounterMetricFamily:
+    return CounterMetricFamily(
         "crowdsec_decisions_total",
-        "Total decisions fetched from /v1/decisions since exporter start"
+        "Total decisions fetched from /v1/decisions since exporter start",
+        labels=Alert.total_metric_labels()
     )
-    m.add_metric([], current_total)
-    return m
 
 # --- Alerts ---
 def alerts() -> GaugeMetricFamily :
@@ -58,6 +57,12 @@ def alert_events_count() -> GaugeMetricFamily:
         "crowdsec_alert_events_count",
         "Number of events for each CrowdSec alert",
         labels=Alert.events_count_metric_labels(),
+    )
+def alert_events_count_total() -> CounterMetricFamily:
+    return CounterMetricFamily(
+        "crowdsec_events_total",
+        "Total number of events for each CrowdSec alert",
+        labels=Alert.total_metric_labels(),
     )
 # --- Allowlists ---
 def allowlists() -> GaugeMetricFamily:
