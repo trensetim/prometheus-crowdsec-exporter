@@ -8,7 +8,7 @@ from prometheus_client import start_http_server
 from prometheus_client.core import REGISTRY
 
 from config import Config
-from collector import CrowdSecCollector
+from collector import CrowdsecCollector
 import logger
 
 CONFIG: Config
@@ -28,7 +28,7 @@ def _init_logging() -> logging.Logger:
     return logger.get_logger("main")
 
 def _start_metrics_server() -> Tuple[WSGIServer, threading.Thread]:
-    REGISTRY.register(CrowdSecCollector(CONFIG))
+    REGISTRY.register(CrowdsecCollector(CONFIG))
     result = start_http_server(port = CONFIG.bind_port, addr = CONFIG.bind_host)
     LOGGER.info("metricsServerStarted", port = CONFIG.bind_port, host = CONFIG.bind_host)
     return result

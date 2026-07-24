@@ -16,7 +16,7 @@ log = get_logger(__name__)
 
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-few-public-methods
-class CrowdSecCollector(Collector):
+class CrowdsecCollector(Collector):
 
     _poller: CrowdsecPoller
 
