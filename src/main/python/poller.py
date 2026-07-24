@@ -1,7 +1,9 @@
 from math import ceil
 from typing import Sequence
+
 from datetime import datetime, timezone
 import requests
+
 from config import Config
 from logger import get_logger
 from models import Alert, Allowlist
@@ -102,8 +104,11 @@ class CrowdsecPoller:
         return self._credentials.jwt(self._http_client)
 
     def poll_allowlists(self) -> list:
-        raw_list = self._fetch("/v1/allowlists")
-        return [Allowlist.parse(i) for i in raw_list]
+        # https://www.reddit.com/r/CrowdSec/comments/1rj3459/allowlist_items_not_appearing_on_lapi_response/
+        # the `with_content=true` query param is not yet documented on https://crowdsecurity.github.io/api_doc/#/watchers/getAllowlists
+        raw_list = self._fetch("/v1/allowlists?with_content=true")
+        allowlists = [Allowlist.parse(i) for i in raw_list]
+        return allowlists
 
     def poll_alerts(self) -> Sequence[Alert]:
         def query_params(ago: str | None = None, limit: int = 1000) -> str:

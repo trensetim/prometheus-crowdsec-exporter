@@ -3,7 +3,7 @@
   "kind": "Dashboard",
   "metadata": {
     "name": "afs37slvy77k0d",
-    "generation": 36,
+    "generation": 43,
     "creationTimestamp": "2026-07-24T06:22:25Z",
     "labels": {},
     "annotations": {}
@@ -61,7 +61,7 @@
                         "fullMetaSearch": false,
                         "includeNullMetadata": true,
                         "instant": false,
-                        "legendFormat": "__auto",
+                        "legendFormat": "Total",
                         "range": true,
                         "useBackend": false
                       },
@@ -71,6 +71,29 @@
                       }
                     },
                     "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "sum(increase(crowdsec_decisions_total[1d]))",
+                        "instant": false,
+                        "legendFormat": "Daily Increase",
+                        "range": true
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "prometheus-1",
+                        "grafana.app/export-datasource-name": "Prometheus"
+                      }
+                    },
+                    "refId": "B",
                     "hidden": false
                   }
                 }
@@ -88,7 +111,7 @@
                 "colorMode": "none",
                 "graphMode": "area",
                 "justifyMode": "auto",
-                "orientation": "auto",
+                "orientation": "horizontal",
                 "percentChangeColorMode": "standard",
                 "reduceOptions": {
                   "calcs": [
@@ -99,7 +122,7 @@
                 },
                 "showPercentChange": false,
                 "text": {},
-                "textMode": "value",
+                "textMode": "value_and_name",
                 "wideLayout": true
               },
               "fieldConfig": {
@@ -356,7 +379,7 @@
         "kind": "Panel",
         "spec": {
           "id": 15,
-          "title": "All Allowlists",
+          "title": "Allowlists",
           "description": "",
           "links": [],
           "data": {
@@ -373,7 +396,7 @@
                       "spec": {
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "(0 * crowdsec_allowlists)\r\n+ on (allowlist_name) group_left()\r\n(\r\n    sum by (allowlist_id) (\r\n        count by (allowlist_id) (crowdsec_allowlist_items)\r\n    )\r\n)",
+                        "expr": "(\r\n  (0 * crowdsec_allowlists)\r\n  + on (allowlist_name) group_left\r\n    count by (allowlist_name) (\r\n      crowdsec_allowlist_items\r\n    )\r\n)\r\nor\r\n(0 * crowdsec_allowlists)",
                         "format": "table",
                         "instant": true,
                         "legendFormat": "__auto",
@@ -410,21 +433,21 @@
                       },
                       "includeByName": {},
                       "indexByName": {
-                        "Time": 0,
-                        "Value": 10,
-                        "allowlist_id": 1,
-                        "console_managed": 4,
-                        "created_at": 5,
-                        "description": 3,
-                        "env": 7,
-                        "instance": 8,
-                        "job": 9,
-                        "name": 2,
-                        "updated_at": 6
+                        "Time": 2,
+                        "Value": 9,
+                        "allowlist_name": 0,
+                        "console_managed": 3,
+                        "created_at": 4,
+                        "description": 1,
+                        "env": 5,
+                        "instance": 6,
+                        "job": 7,
+                        "updated_at": 8
                       },
                       "renameByName": {
                         "Value": "Items",
                         "allowlist_id": "ID",
+                        "allowlist_name": "Allowlist",
                         "console_managed": "Console",
                         "created_at": "Created At",
                         "description": "Description",
@@ -439,6 +462,25 @@
                 },
                 {
                   "kind": "Transformation",
+                  "group": "convertFieldType",
+                  "spec": {
+                    "options": {
+                      "conversions": [
+                        {
+                          "destinationType": "time",
+                          "targetField": "Created At"
+                        },
+                        {
+                          "destinationType": "time",
+                          "targetField": "Updated At"
+                        }
+                      ],
+                      "fields": {}
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
                   "group": "sortBy",
                   "spec": {
                     "options": {
@@ -446,7 +488,7 @@
                       "sort": [
                         {
                           "desc": true,
-                          "field": "Updated At"
+                          "field": "Items"
                         }
                       ]
                     }
@@ -463,7 +505,7 @@
             "spec": {
               "options": {
                 "cellHeight": "sm",
-                "enablePagination": true,
+                "enablePagination": false,
                 "frameIndex": 0,
                 "showHeader": true,
                 "sortBy": [
@@ -507,7 +549,8 @@
                   {
                     "matcher": {
                       "id": "byName",
-                      "options": "ID"
+                      "scope": "series",
+                      "options": "Items"
                     },
                     "properties": [
                       {
@@ -518,49 +561,14 @@
                   },
                   {
                     "matcher": {
-                      "id": "byName",
-                      "options": "Name"
+                      "id": "byRegexp",
+                      "scope": "series",
+                      "options": "/.* At$/"
                     },
                     "properties": [
                       {
                         "id": "custom.width",
                         "value": 200
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Created At"
-                    },
-                    "properties": [
-                      {
-                        "id": "custom.width",
-                        "value": 230
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Updated At"
-                    },
-                    "properties": [
-                      {
-                        "id": "custom.width",
-                        "value": 230
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Items"
-                    },
-                    "properties": [
-                      {
-                        "id": "custom.width",
-                        "value": 100
                       }
                     ]
                   }
@@ -591,7 +599,7 @@
                       "spec": {
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "crowdsec_allowlist_items\r\n + on(allowlist_id) group_left(name) (crowdsec_allowlists * 0)",
+                        "expr": "crowdsec_allowlist_items\r\n + on(allowlist_name) group_left() (crowdsec_allowlists * 0)",
                         "format": "table",
                         "instant": true,
                         "legendFormat": "__auto",
@@ -626,25 +634,46 @@
                       },
                       "includeByName": {},
                       "indexByName": {
-                        "Time": 4,
-                        "Value": 10,
-                        "allowlist_id": 0,
-                        "created_at": 8,
-                        "description": 3,
-                        "env": 5,
-                        "expiration": 9,
-                        "instance": 6,
-                        "job": 7,
-                        "name": 1,
-                        "value": 2
+                        "Time": 3,
+                        "Value": 9,
+                        "allowlist_name": 0,
+                        "created_at": 7,
+                        "description": 2,
+                        "env": 4,
+                        "expiration": 8,
+                        "instance": 5,
+                        "job": 6,
+                        "value": 1
                       },
                       "renameByName": {
                         "allowlist_id": "Allowlist ID",
+                        "allowlist_name": "Allowlist",
+                        "created_at": "Created At",
                         "description": "Description",
+                        "expiration": "Expiration",
                         "isExpired": "Expired",
                         "name": "Allowlist",
-                        "value": "IP / CIDR"
+                        "value": "IP"
                       }
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
+                  "group": "convertFieldType",
+                  "spec": {
+                    "options": {
+                      "conversions": [
+                        {
+                          "destinationType": "time",
+                          "targetField": "Created At"
+                        },
+                        {
+                          "destinationType": "time",
+                          "targetField": "Expiration"
+                        }
+                      ],
+                      "fields": {}
                     }
                   }
                 }
@@ -659,7 +688,7 @@
             "spec": {
               "options": {
                 "cellHeight": "sm",
-                "enablePagination": true,
+                "enablePagination": false,
                 "showHeader": true,
                 "sortBy": []
               },
@@ -777,12 +806,52 @@
                   {
                     "matcher": {
                       "id": "byName",
+                      "scope": "series",
+                      "options": "IP"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 120
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Created At"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 200
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Expiration"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 200
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
                       "options": "Allowlist"
                     },
                     "properties": [
                       {
                         "id": "custom.width",
-                        "value": 250
+                        "value": 141
                       }
                     ]
                   }
@@ -946,7 +1015,7 @@
                       "version": "v0",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "increase(crowdsec_poll_errors_total[$__range])",
+                        "expr": "floor(increase(crowdsec_poll_errors_total[$__rate_interval]))",
                         "instant": false,
                         "legendFormat": "Total",
                         "range": true
@@ -969,7 +1038,7 @@
                       "version": "v0",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "irate(crowdsec_poll_errors_total[$__range])",
+                        "expr": "irate(crowdsec_poll_errors_total[$__rate_interval])",
                         "instant": false,
                         "legendFormat": "Rate",
                         "range": true
@@ -1076,7 +1145,7 @@
                         "fullMetaSearch": false,
                         "includeNullMetadata": true,
                         "instant": false,
-                        "legendFormat": "__auto",
+                        "legendFormat": "Total",
                         "range": true,
                         "useBackend": false
                       },
@@ -1086,6 +1155,35 @@
                       }
                     },
                     "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "spec": {
+                        "disableTextWrap": false,
+                        "editorMode": "code",
+                        "exemplar": false,
+                        "expr": "sum(increase(crowdsec_alerts_total[1d]))",
+                        "format": "time_series",
+                        "fullMetaSearch": false,
+                        "includeNullMetadata": true,
+                        "instant": false,
+                        "legendFormat": "Daily Increase",
+                        "range": true,
+                        "useBackend": false
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "prometheus-1",
+                        "grafana.app/export-datasource-name": "Prometheus"
+                      }
+                    },
+                    "refId": "B",
                     "hidden": false
                   }
                 }
@@ -1103,7 +1201,7 @@
                 "colorMode": "none",
                 "graphMode": "area",
                 "justifyMode": "auto",
-                "orientation": "auto",
+                "orientation": "horizontal",
                 "percentChangeColorMode": "standard",
                 "reduceOptions": {
                   "calcs": [
@@ -1114,7 +1212,7 @@
                 },
                 "showPercentChange": false,
                 "text": {},
-                "textMode": "value",
+                "textMode": "value_and_name",
                 "wideLayout": true
               },
               "fieldConfig": {
@@ -1352,18 +1450,18 @@
                       },
                       {
                         "value": 1,
-                        "color": "green"
-                      },
-                      {
-                        "value": 10,
-                        "color": "super-light-orange"
+                        "color": "super-light-green"
                       },
                       {
                         "value": 20,
-                        "color": "orange"
+                        "color": "super-light-orange"
                       },
                       {
                         "value": 30,
+                        "color": "orange"
+                      },
+                      {
+                        "value": 40,
                         "color": "super-light-red"
                       }
                     ]
@@ -1406,7 +1504,7 @@
                         "fullMetaSearch": false,
                         "includeNullMetadata": true,
                         "instant": false,
-                        "legendFormat": "__auto",
+                        "legendFormat": "Total",
                         "range": true,
                         "useBackend": false
                       },
@@ -1416,6 +1514,35 @@
                       }
                     },
                     "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "spec": {
+                        "disableTextWrap": false,
+                        "editorMode": "code",
+                        "exemplar": false,
+                        "expr": "sum(increase(crowdsec_events_total[1d]))",
+                        "format": "time_series",
+                        "fullMetaSearch": false,
+                        "includeNullMetadata": true,
+                        "instant": false,
+                        "legendFormat": "Daily Increase",
+                        "range": true,
+                        "useBackend": false
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "prometheus-1",
+                        "grafana.app/export-datasource-name": "Prometheus"
+                      }
+                    },
+                    "refId": "B",
                     "hidden": false
                   }
                 }
@@ -1433,7 +1560,7 @@
                 "colorMode": "none",
                 "graphMode": "area",
                 "justifyMode": "auto",
-                "orientation": "auto",
+                "orientation": "horizontal",
                 "percentChangeColorMode": "standard",
                 "reduceOptions": {
                   "calcs": [
@@ -1444,7 +1571,7 @@
                 },
                 "showPercentChange": false,
                 "text": {},
-                "textMode": "value",
+                "textMode": "value_and_name",
                 "wideLayout": true
               },
               "fieldConfig": {
@@ -2581,6 +2708,150 @@
                     "showPoints": "auto",
                     "showValues": false,
                     "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-49": {
+        "kind": "Panel",
+        "spec": {
+          "id": 49,
+          "title": "Allowlist Count",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "crowdsec_allowlist_items_total",
+                        "legendFormat": "Items",
+                        "range": true
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "prometheus-1",
+                        "grafana.app/export-datasource-name": "Prometheus"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "spec": {
+                        "editorMode": "code",
+                        "expr": "count(crowdsec_allowlists)",
+                        "instant": false,
+                        "legendFormat": "Allowlists",
+                        "range": true
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "prometheus-1",
+                        "grafana.app/export-datasource-name": "Prometheus"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.1.1",
+            "spec": {
+              "options": {
+                "annotations": {
+                  "clustering": -1,
+                  "multiLane": false
+                },
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": 600000,
                     "stacking": {
                       "group": "A",
                       "mode": "none"
@@ -3810,7 +4081,7 @@
                         "x": 0,
                         "y": 0,
                         "width": 8,
-                        "height": 12,
+                        "height": 13,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-5"
@@ -3823,7 +4094,7 @@
                         "x": 8,
                         "y": 0,
                         "width": 3,
-                        "height": 6,
+                        "height": 7,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-10"
@@ -3836,7 +4107,7 @@
                         "x": 11,
                         "y": 0,
                         "width": 3,
-                        "height": 6,
+                        "height": 7,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-27"
@@ -3849,7 +4120,7 @@
                         "x": 14,
                         "y": 0,
                         "width": 3,
-                        "height": 6,
+                        "height": 7,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-31"
@@ -3862,7 +4133,7 @@
                         "x": 17,
                         "y": 0,
                         "width": 2,
-                        "height": 6,
+                        "height": 7,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-30"
@@ -3872,10 +4143,10 @@
                     {
                       "kind": "GridLayoutItem",
                       "spec": {
-                        "x": 20,
+                        "x": 19,
                         "y": 0,
                         "width": 2,
-                        "height": 3,
+                        "height": 4,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-19"
@@ -3885,10 +4156,10 @@
                     {
                       "kind": "GridLayoutItem",
                       "spec": {
-                        "x": 22,
+                        "x": 21,
                         "y": 0,
-                        "width": 2,
-                        "height": 6,
+                        "width": 3,
+                        "height": 7,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-22"
@@ -3898,8 +4169,8 @@
                     {
                       "kind": "GridLayoutItem",
                       "spec": {
-                        "x": 20,
-                        "y": 3,
+                        "x": 19,
+                        "y": 4,
                         "width": 2,
                         "height": 3,
                         "element": {
@@ -3912,7 +4183,7 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 8,
-                        "y": 6,
+                        "y": 7,
                         "width": 4,
                         "height": 6,
                         "element": {
@@ -3925,7 +4196,7 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 12,
-                        "y": 6,
+                        "y": 7,
                         "width": 5,
                         "height": 6,
                         "element": {
@@ -3938,7 +4209,7 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 17,
-                        "y": 6,
+                        "y": 7,
                         "width": 7,
                         "height": 6,
                         "element": {
@@ -4019,8 +4290,8 @@
                       "spec": {
                         "x": 0,
                         "y": 0,
-                        "width": 9,
-                        "height": 8,
+                        "width": 11,
+                        "height": 9,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-15"
@@ -4030,13 +4301,26 @@
                     {
                       "kind": "GridLayoutItem",
                       "spec": {
+                        "x": 11,
+                        "y": 0,
+                        "width": 13,
+                        "height": 9,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-16"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
                         "x": 0,
-                        "y": 8,
+                        "y": 9,
                         "width": 24,
                         "height": 8,
                         "element": {
                           "kind": "ElementReference",
-                          "name": "panel-16"
+                          "name": "panel-49"
                         }
                       }
                     }
