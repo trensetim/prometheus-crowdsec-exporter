@@ -1,8 +1,6 @@
-from typing import Type
-
+from typing import Type, Any
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any
 
 from models._base import (
     boolField,
@@ -98,20 +96,22 @@ class Alert:
         if not isinstance(raw, dict):
             raise ValueError("Alert is not a dict")
 
+        created_at = datetimeField(raw, "created_at") or datetime.fromtimestamp(0, tz=timezone.utc)
+
         events = raw.get("events") or []
         events = tuple(AlertEvent.parse(re) for re in events)
 
         decisions = raw.get("decisions") or []
         decisions = tuple(
             item for rd in decisions
-            if (item := Decision.parse(rd)) is not None
+            if (item := Decision.parse(rd, created_at)) is not None
         )
 
         return cls(
             id = intField(raw, "id"),
             uuid = strField(raw, "uuid", ""),
             machine_id = strField(raw, "machine_id", ""),
-            created_at = datetimeField(raw, "created_at") or datetime.fromtimestamp(0, tz=timezone.utc),
+            created_at = created_at,
             scenario = strField(raw, "scenario"),
             scenario_hash = strField(raw, "scenario_hash", ""),
             scenario_version = strField(raw, "scenario_version", ""),
