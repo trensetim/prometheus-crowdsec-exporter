@@ -58,6 +58,13 @@ def alert_events_count() -> GaugeMetricFamily:
         "Number of events for each CrowdSec alert",
         labels=Alert.events_count_metric_labels(),
     )
+def alert_decisions_count() -> GaugeMetricFamily:
+    return GaugeMetricFamily(
+        "crowdsec_alert_decisions_count",
+        "Number of decisions for each CrowdSec alert",
+        labels=Alert.decisions_count_metric_labels(),
+    )
+# --- Events ---
 def alert_events_count_total() -> CounterMetricFamily:
     return CounterMetricFamily(
         "crowdsec_events_total",

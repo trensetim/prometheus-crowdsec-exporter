@@ -202,6 +202,11 @@ class Alert:
         return Alert.created_metric_labels()
     def events_count_metric_label_values(self) -> list[str]:
         return self.created_metric_label_values()
+    @staticmethod
+    def decisions_count_metric_labels() -> list[str]:
+        return Alert.created_metric_labels()
+    def decisions_count_metric_label_values(self) -> list[str]:
+        return self.created_metric_label_values()
 
     @staticmethod
     def total_metric_labels() -> list[str]:

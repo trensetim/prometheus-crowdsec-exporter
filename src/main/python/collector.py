@@ -76,6 +76,7 @@ class CrowdsecCollector(Collector):
         yield self._collect_alert_start(alerts)
         yield self._collect_alert_stop(alerts)
         yield self._collect_alert_events_count(alerts)
+        yield self._collect_alert_decisions_count(alerts)
         yield self._collect_allowlists(allowlists)
         yield self._collect_allowlists_total(allowlists)
         yield self._collect_allowlist_created(allowlists)
@@ -211,6 +212,12 @@ class CrowdsecCollector(Collector):
         m = metrics.alert_events_count()
         for a in alerts:
             m.add_metric(a.events_count_metric_label_values(), a.events_count)
+        return m
+
+    def _collect_alert_decisions_count(self, alerts: list[Alert]) -> Metric:
+        m = metrics.alert_decisions_count()
+        for a in alerts:
+            m.add_metric(a.decisions_count_metric_label_values(), len(a.decisions))
         return m
 
     def _collect_totals(self,
