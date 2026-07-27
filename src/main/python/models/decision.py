@@ -3,12 +3,12 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Type
 
-from models._base import (
-    boolField,
-    datetimeField,
-    intField,
-    requiredFieldsPresent,
-    strField,
+from models._parse_utils import (
+    parse_bool_field,
+    parse_datetime_field,
+    parse_int_field,
+    are_required_fields_present,
+    parse_string_field,
 )
 
 @dataclass(frozen=True)
@@ -34,26 +34,26 @@ class Decision:
         if not isinstance(raw, dict):
             raise ValueError("Decision is not a dict")
 
-        missing = requiredFieldsPresent(raw, ["type", "origin", "scenario", "scope"])
+        missing = are_required_fields_present(raw, ["type", "origin", "scenario", "scope"])
         if missing:
             raise ValueError(f"Decision is missing required fields: {missing}")
 
-        duration = strField(raw, "duration", fallback="")
-        until = datetimeField(raw, "until")
+        duration = parse_string_field(raw, "duration", "")
+        until = parse_datetime_field(raw, "until")
         if until is None:
             until = created_at_hint + cls._parse_duration(duration)
 
         return cls(
-            decision_id = intField(raw, "id"),
-            decision_uuid = strField(raw, "uuid", fallback=""),
-            type = strField(raw, "type"),
-            origin = strField(raw, "origin"),
-            scenario = strField(raw, "scenario"),
-            scope = strField(raw, "scope"),
-            value = strField(raw, "value", fallback=""),
+            decision_id = parse_int_field(raw, "id"),
+            decision_uuid = parse_string_field(raw, "uuid", ""),
+            type = parse_string_field(raw, "type"),
+            origin = parse_string_field(raw, "origin"),
+            scenario = parse_string_field(raw, "scenario"),
+            scope = parse_string_field(raw, "scope"),
+            value = parse_string_field(raw, "value", ""),
             duration = duration,
             until = until,
-            simulated = boolField(raw, "simulated"),
+            simulated = parse_bool_field(raw, "simulated"),
         )
 
     def parse_duration(self) -> timedelta:

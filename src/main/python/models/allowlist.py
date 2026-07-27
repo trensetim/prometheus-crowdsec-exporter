@@ -3,10 +3,10 @@ from typing import Any, Type
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from models._base import (
-    boolField,
-    datetimeField,
-    strField,
+from models._parse_utils import (
+    parse_bool_field,
+    parse_datetime_field,
+    parse_string_field
 )
 
 @dataclass(frozen = True)
@@ -24,12 +24,12 @@ class AllowlistItem:
         if not raw.get("value"):
             raise ValueError("AllowlistItem is missing value")
 
-        created_at = datetimeField(raw, "created_at") or datetime.fromtimestamp(0, tz=timezone.utc)
-        expiration = datetimeField(raw, "expiration")
+        created_at = parse_datetime_field(raw, "created_at") or datetime.fromtimestamp(0, tz=timezone.utc)
+        expiration = parse_datetime_field(raw, "expiration")
 
         return cls(
-            value = strField(raw, "value"),
-            description = strField(raw, "description", ""),
+            value = parse_string_field(raw, "value"),
+            description = parse_string_field(raw, "description", ""),
             created_at = created_at,
             expiration = expiration,
         )
@@ -85,12 +85,12 @@ class Allowlist:
         items = [AllowlistItem.parse(rd) for rd in raw_items]
 
         return cls(
-            name = strField(raw, "name"),
-            description = strField(raw, "description"),
+            name = parse_string_field(raw, "name"),
+            description = parse_string_field(raw, "description"),
             items = items,
-            created_at = datetimeField(raw, "created_at") or datetime.fromtimestamp(0, tz=timezone.utc),
-            updated_at = datetimeField(raw, "updated_at") or datetime.fromtimestamp(0, tz=timezone.utc),
-            console_managed = boolField(raw, "console_managed")
+            created_at = parse_datetime_field(raw, "created_at") or datetime.fromtimestamp(0, tz=timezone.utc),
+            updated_at = parse_datetime_field(raw, "updated_at") or datetime.fromtimestamp(0, tz=timezone.utc),
+            console_managed = parse_bool_field(raw, "console_managed")
         )
 
     @staticmethod

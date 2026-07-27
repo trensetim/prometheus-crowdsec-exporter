@@ -2,11 +2,11 @@ from typing import Type, Any
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from models._base import (
-    boolField,
-    datetimeField,
-    intField,
-    strField,
+from models._parse_utils import (
+    parse_bool_field,
+    parse_datetime_field,
+    parse_int_field,
+    parse_string_field,
 )
 from models.decision import Decision
 
@@ -39,13 +39,13 @@ class AlertSource:
             )
 
         return cls(
-            scope = strField(raw, "scope", ""),
-            value = strField(raw, "value", ""),
-            ip = strField(raw, "ip", ""),
-            range = strField(raw, "range", ""),
-            as_number= strField(raw, "as_number", ""),
-            as_name = strField(raw, "as_name", ""),
-            country = strField(raw, "cn", ""),
+            scope = parse_string_field(raw, "scope", ""),
+            value = parse_string_field(raw, "value", ""),
+            ip = parse_string_field(raw, "ip", ""),
+            range = parse_string_field(raw, "range", ""),
+            as_number= parse_string_field(raw, "as_number", ""),
+            as_name = parse_string_field(raw, "as_name", ""),
+            country = parse_string_field(raw, "cn", ""),
             latitude = float(raw.get("latitude") or 0.0),
             longitude = float(raw.get("longitude") or 0.0),
         )
@@ -62,7 +62,7 @@ class AlertEvent:
             return None
 
         return cls(
-            timestamp = intField(raw, "timestamp"),
+            timestamp = parse_int_field(raw, "timestamp"),
             meta = _parse_meta(raw.get("meta"))
         )
 
@@ -96,7 +96,7 @@ class Alert:
         if not isinstance(raw, dict):
             raise ValueError("Alert is not a dict")
 
-        created_at = datetimeField(raw, "created_at") or datetime.fromtimestamp(0, tz=timezone.utc)
+        created_at = parse_datetime_field(raw, "created_at") or datetime.fromtimestamp(0, tz=timezone.utc)
 
         events = raw.get("events") or []
         events = tuple(AlertEvent.parse(re) for re in events)
@@ -108,27 +108,27 @@ class Alert:
         )
 
         return cls(
-            id = intField(raw, "id"),
-            uuid = strField(raw, "uuid", ""),
-            machine_id = strField(raw, "machine_id", ""),
+            id = parse_int_field(raw, "id"),
+            uuid = parse_string_field(raw, "uuid", ""),
+            machine_id = parse_string_field(raw, "machine_id", ""),
             created_at = created_at,
-            scenario = strField(raw, "scenario"),
-            scenario_hash = strField(raw, "scenario_hash", ""),
-            scenario_version = strField(raw, "scenario_version", ""),
-            message = strField(raw, "message", ""),
-            events_count = intField(raw, "events_count"),
-            start_at = datetimeField(raw, "start_at") or datetime.fromtimestamp(0, tz=timezone.utc),
-            stop_at = datetimeField(raw, "stop_at") or datetime.fromtimestamp(0, tz=timezone.utc),
-            capacity = intField(raw, "capacity"),
-            leakspeed = strField(raw, "leakspeed"),
-            simulated = boolField(raw, "simulated"),
+            scenario = parse_string_field(raw, "scenario"),
+            scenario_hash = parse_string_field(raw, "scenario_hash", ""),
+            scenario_version = parse_string_field(raw, "scenario_version", ""),
+            message = parse_string_field(raw, "message", ""),
+            events_count = parse_int_field(raw, "events_count"),
+            start_at = parse_datetime_field(raw, "start_at") or datetime.fromtimestamp(0, tz=timezone.utc),
+            stop_at = parse_datetime_field(raw, "stop_at") or datetime.fromtimestamp(0, tz=timezone.utc),
+            capacity = parse_int_field(raw, "capacity"),
+            leakspeed = parse_string_field(raw, "leakspeed"),
+            simulated = parse_bool_field(raw, "simulated"),
             events = events,
-            remediation = boolField(raw, "remediation"),
+            remediation = parse_bool_field(raw, "remediation"),
             decisions = decisions,
             source = AlertSource.parse(raw.get("source")),
             meta = _parse_meta(raw.get("meta")),
             labels = tuple(str(l) for l in (raw.get("labels") or []) if l),
-            kind = strField(raw, "kind"),
+            kind = parse_string_field(raw, "kind"),
         )
 
     def __eq__(self, value):
