@@ -244,6 +244,22 @@ class Alert:
             self.decisions[0].scope if self.decisions else "",
         ]
 
+    @staticmethod
+    def grand_total_metric_labels() -> list[str]:
+        return [
+            "scenario",
+            "country",
+            "as_number",
+            "as_name",
+        ]
+    def grand_total_metric_label_values(self) -> list[str]:
+        return [
+            self.scenario,
+            self.source.country,
+            self.source.as_number,
+            self.source.as_name,
+        ]
+
 def _parse_meta(raw: Any) -> dict[str, str]:
     if not isinstance(raw, list):
         return {}

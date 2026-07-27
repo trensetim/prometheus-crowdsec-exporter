@@ -1,3 +1,6 @@
+from time import time
+from datetime import datetime, timedelta, timezone
+
 from prometheus_client.metrics_core import CounterMetricFamily
 
 class TotalCounter:
@@ -65,13 +68,27 @@ class TotalCounterCollection:
     _max_age: timedelta
     """Maximum age for a non-incremented counter to be kept in memory. If this is exceeded, the counter will be pruned."""
 
+    _grand_totals: dict[int, TotalCounter]
+    """
+    A never-pruned, coarse-grained total (ie. with a reduced labelset that is not high-cardinality),
+    but where we still treat the first sample as an increment as well
+    """
+
     def __init__(self, max_count: int, max_age: timedelta) -> None:
         self._counters = {}
         self._max_count = max_count
         self._max_age = max_age
-    def increment(self, label_values: list[str], amount: int = 1, reset_at_start: bool = False) -> None:
+        self._grand_totals = {}
+
+    def grand_total(self, label_values: list[str]) -> int:
+        return self._grand_totals.get(tuple(label_values), 0)
+
+    def increment(self, label_values: list[str], grand_total_label_values: list[str], amount: int = 1, reset_at_start: bool = False) -> None:
         counter = self._get_or_create(label_values, reset_at_start)
         counter.increment(amount)
+        grand_total_counter = self._get_or_create_grand_total(grand_total_label_values, reset_at_start)
+        grand_total_counter.increment(amount)
+
     def _get_or_create(self, label_values: list[str], reset_at_start: bool) -> TotalCounter:
         """
         Return the current counter value for the given labelset, creating a new counter if it does not exist yet.
@@ -85,10 +102,22 @@ class TotalCounterCollection:
             self._counters[key] = TotalCounter(label_values, reset_at_start)
         return self._counters[key]
 
+    def _get_or_create_grand_total(self, label_values: list[str], reset_at_start: bool) -> TotalCounter:
+        key = TotalCounter.hash_impl(label_values)
+        if key not in self._grand_totals:
+            self._grand_totals[key] = TotalCounter(label_values, reset_at_start)
+        return self._grand_totals[key]
+
     def collect(self, m: CounterMetricFamily) -> CounterMetricFamily:
         for counter in self._counters.values():
             counter.collect(m)
         return m
+
+    def collect_grand_totals(self, m: CounterMetricFamily) -> CounterMetricFamily:
+        for counter in self._grand_totals.values():
+            counter.collect(m)
+        return m
+
     def prune(self) -> None:
         """
         Remove all counters that have not been incremented since the last prune() call.

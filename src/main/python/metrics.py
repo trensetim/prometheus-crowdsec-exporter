@@ -2,6 +2,26 @@ from prometheus_client.metrics_core import GaugeMetricFamily, CounterMetricFamil
 
 from models import Decision, Allowlist, AllowlistItem, Alert
 
+# --- Grand Totals ---
+def alerts_grand_total() -> CounterMetricFamily:
+    return CounterMetricFamily(
+        "crowdsec_alerts_grand_total",
+        "Grand total of alerts by country, network and scenario",
+        labels=Alert.grand_total_metric_labels()
+    )
+def decisions_grand_total() -> CounterMetricFamily:
+    return CounterMetricFamily(
+        "crowdsec_decisions_grand_total",
+        "Grand total of decisions by country, network and scenario",
+        labels=Alert.grand_total_metric_labels()
+    )
+def events_count_grand_total() -> CounterMetricFamily:
+    return CounterMetricFamily(
+        "crowdsec_events_grand_total",
+        "Grand total of events by country, network and scenario",
+        labels=Alert.grand_total_metric_labels()
+    )
+
 # --- Decisions ---
 def decisions() -> GaugeMetricFamily:
     return GaugeMetricFamily(
@@ -16,7 +36,6 @@ def decisions_total() -> CounterMetricFamily:
         "Total decisions by offender",
         labels=Alert.total_metric_labels()
     )
-
 # --- Alerts ---
 def alerts() -> GaugeMetricFamily :
     return GaugeMetricFamily(
@@ -65,7 +84,7 @@ def alert_decisions_count() -> GaugeMetricFamily:
         labels=Alert.decisions_count_metric_labels(),
     )
 # --- Events ---
-def alert_events_count_total() -> CounterMetricFamily:
+def events_total() -> CounterMetricFamily:
     return CounterMetricFamily(
         "crowdsec_events_total",
         "Total number of events for each CrowdSec alert",

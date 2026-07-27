@@ -227,8 +227,11 @@ class CrowdsecCollector(Collector):
         ) -> Iterable[Metric]:
         yield decisions_totals.collect(metrics.decisions_total())
         yield alerts_totals.collect(metrics.alerts_total())
-        yield events_totals.collect(metrics.alert_events_count_total())
+        yield events_totals.collect(metrics.events_total())
 
+        yield decisions_totals.collect_grand_totals(metrics.decisions_grand_total())
+        yield alerts_totals.collect_grand_totals(metrics.alerts_grand_total())
+        yield events_totals.collect_grand_totals(metrics.events_count_grand_total())
 
     def _update_totals(self,
             alerts: list[Alert],
@@ -239,6 +242,7 @@ class CrowdsecCollector(Collector):
         ) -> None:
         for alert in alerts:
             label_values = alert.total_metric_label_values()
-            alerts_totals.increment(label_values, 1, reset_at_start)
-            events_totals.increment(label_values, alert.events_count, reset_at_start)
-            decisions_totals.increment(label_values, len(alert.decisions), reset_at_start)
+            grand_total_label_values = alert.grand_total_metric_label_values()
+            alerts_totals.increment(label_values, grand_total_label_values, 1, reset_at_start)
+            events_totals.increment(label_values, grand_total_label_values, alert.events_count, reset_at_start)
+            decisions_totals.increment(label_values, grand_total_label_values, len(alert.decisions), reset_at_start)
