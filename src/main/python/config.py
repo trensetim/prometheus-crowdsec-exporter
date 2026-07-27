@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from datetime import timedelta
 
 def _read_required_env(key: str) -> str:
     value = os.getenv(key)
@@ -39,13 +40,21 @@ class Config:
     bind_host: str
     log_level: str
 
-    metrics_retain_startup_increment: bool
+    metrics_retain_counter_startup_increments: bool
     """
     Whether the initial poll shall be prefixed with zero values,
     such that PromQL increment()-queries see the initial poll
     as full increments.
     This is helpful when the exporter is newly-introduced, to get the first scrape.
     But afterwards it is better disabled, to avoid double-counting upon exporter restarts.
+    """
+    metrics_counter_max_count: int
+    """
+    Maximum number of counters to keep in memory. If this is exceeded, the oldest counters will be pruned.
+    """
+    metrics_counter_max_age: timedelta
+    """
+    Maximum age for a non-incremented counter to be kept in memory. If this is exceeded, the counter will be pruned.
     """
 
     def __init__(self) -> None:
@@ -58,4 +67,8 @@ class Config:
         self.bind_host = os.getenv("BIND_HOST", "0.0.0.0")
         self.log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 
-        self.metrics_retain_startup_increment = os.getenv("METRICS_RETAIN_STARTUP_INCREMENT", "false").lower() in ("true", "1", "yes")
+        self.metrics_retain_counter_startup_increments = os.getenv("METRICS_RETAIN_COUNTER_STARTUP_INCREMENTS", "false").lower() in ("true", "1", "yes")
+        self.metrics_counter_max_count = int(os.getenv("METRICS_COUNTER_MAX_COUNT", "10000"))
+
+        metrics_counter_max_age_seconds = int(os.getenv("METRICS_COUNTER_MAX_AGE_SECONDS", str(5*60))) # 5min
+        self.metrics_counter_max_age = timedelta(seconds=metrics_counter_max_age_seconds)

@@ -37,15 +37,15 @@ class CrowdsecCollector(Collector):
     def __init__(self, config: Config) -> None:
         self._config_version = config.version
         self._poller = CrowdsecPoller(config)
-        self._metric_decisions_total = TotalCounterCollection()
-        self._metric_alerts_total = TotalCounterCollection()
-        self._metric_events_total = TotalCounterCollection()
+        self._metric_decisions_total = TotalCounterCollection(config.metrics_counter_max_count, config.metrics_counter_max_age)
+        self._metric_alerts_total = TotalCounterCollection(config.metrics_counter_max_count, config.metrics_counter_max_age)
+        self._metric_events_total = TotalCounterCollection(config.metrics_counter_max_count, config.metrics_counter_max_age)
         log.info("collector_initialised")
 
-        if not config.metrics_retain_startup_increment:
+        if not config.metrics_retain_counter_startup_increments:
             # this is the "default" behavior, to avoid counter resets after exporter restarts
             (alerts, _) = self._poll()
-            self._update_alerts_totals(
+            self._update_totals(
                 alerts,
                 self._metric_alerts_total,
                 self._metric_events_total,
@@ -57,7 +57,7 @@ class CrowdsecCollector(Collector):
     def collect(self) -> Iterable[Metric]:
         (alerts, allowlists) = self._poll() or ([], [])
 
-        self._update_alerts_totals(
+        self._update_totals(
             alerts,
             self._metric_alerts_total,
             self._metric_events_total,
@@ -71,14 +71,11 @@ class CrowdsecCollector(Collector):
         yield metrics.last_poll_duration_seconds(self._metric_last_poll_duration_seconds)
 
         yield self._collect_decisions(alerts)
-        yield self._collect_decisions_total(self._metric_decisions_total)
         yield self._collect_alerts(alerts)
-        yield self._collect_alerts_total(self._metric_alerts_total)
         yield self._collect_alert_created(alerts)
         yield self._collect_alert_start(alerts)
         yield self._collect_alert_stop(alerts)
         yield self._collect_alert_events_count(alerts)
-        yield self._collect_events_total(self._metric_events_total)
         yield self._collect_allowlists(allowlists)
         yield self._collect_allowlists_total(allowlists)
         yield self._collect_allowlist_created(allowlists)
@@ -88,6 +85,12 @@ class CrowdsecCollector(Collector):
         yield self._collect_allowlist_items_total(allowlists)
         yield self._collect_allowlist_item_created(allowlists)
         yield self._collect_allowlist_item_expiration(allowlists)
+
+        yield from self._collect_totals(
+            self._metric_decisions_total,
+            self._metric_alerts_total,
+            self._metric_events_total
+        )
 
         self._last_allowlist_names = {a.name for a in allowlists}
         self._last_allowlist_items = {item.value for allowlist in allowlists for item in allowlist.items}
@@ -210,22 +213,17 @@ class CrowdsecCollector(Collector):
             m.add_metric(a.events_count_metric_label_values(), a.events_count)
         return m
 
-    def _collect_alerts_total(self, totals: TotalCounterCollection) -> Metric:
-        m = metrics.alerts_total()
-        totals.collect(m)
-        return m
+    def _collect_totals(self,
+            decisions_totals: TotalCounterCollection,
+            alerts_totals: TotalCounterCollection,
+            events_totals: TotalCounterCollection
+        ) -> Iterable[Metric]:
+        yield decisions_totals.collect(metrics.decisions_total())
+        yield alerts_totals.collect(metrics.alerts_total())
+        yield events_totals.collect(metrics.alert_events_count_total())
 
-    def _collect_events_total(self, totals: TotalCounterCollection) -> Metric:
-        m = metrics.alert_events_count_total()
-        totals.collect(m)
-        return m
 
-    def _collect_decisions_total(self, totals: TotalCounterCollection) -> Metric:
-        m = metrics.decisions_total()
-        totals.collect(m)
-        return m
-
-    def _update_alerts_totals(self,
+    def _update_totals(self,
             alerts: list[Alert],
             alerts_totals: TotalCounterCollection,
             events_totals: TotalCounterCollection,
@@ -234,6 +232,6 @@ class CrowdsecCollector(Collector):
         ) -> None:
         for alert in alerts:
             label_values = alert.total_metric_label_values()
-            alerts_totals.get_or_create(label_values, reset_at_start).increment(1)
-            events_totals.get_or_create(label_values, reset_at_start).increment(alert.events_count)
-            decisions_totals.get_or_create(label_values, reset_at_start).increment(len(alert.decisions))
+            alerts_totals.increment(label_values, 1, reset_at_start)
+            events_totals.increment(label_values, alert.events_count, reset_at_start)
+            decisions_totals.increment(label_values, len(alert.decisions), reset_at_start)

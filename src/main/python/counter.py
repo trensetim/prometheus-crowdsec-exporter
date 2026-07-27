@@ -6,6 +6,9 @@ class TotalCounter:
     _count: int = 0
     _reset: bool
 
+    _last_increment_timestamp: float
+    """When this counter was incremented last, as UNIX seconds."""
+
     def __init__(self, label_values: list[str], reset_at_start: bool) -> None:
         self._label_values = label_values
         self._hash = TotalCounter.hash_impl(label_values)
@@ -21,6 +24,10 @@ class TotalCounter:
 
     def increment(self, amount: int = 1) -> None:
         self._count += amount
+        self._last_increment_timestamp = time()
+
+    def last_increment_timestamp(self) -> float:
+        return self._last_increment_timestamp
 
     def _release_reset(self) -> None:
         self._reset = False
@@ -53,10 +60,19 @@ class TotalCounterCollection:
     """
     _counters: dict[int, TotalCounter]
 
-    def __init__(self) -> None:
-        self._counters = {}
+    _max_count: int
+    """Maximum number of counters to keep in memory. If this is exceeded, the oldest counters will be pruned."""
+    _max_age: timedelta
+    """Maximum age for a non-incremented counter to be kept in memory. If this is exceeded, the counter will be pruned."""
 
-    def get_or_create(self, label_values: list[str], reset_at_start: bool) -> TotalCounter:
+    def __init__(self, max_count: int, max_age: timedelta) -> None:
+        self._counters = {}
+        self._max_count = max_count
+        self._max_age = max_age
+    def increment(self, label_values: list[str], amount: int = 1, reset_at_start: bool = False) -> None:
+        counter = self._get_or_create(label_values, reset_at_start)
+        counter.increment(amount)
+    def _get_or_create(self, label_values: list[str], reset_at_start: bool) -> TotalCounter:
         """
         Return the current counter value for the given labelset, creating a new counter if it does not exist yet.
         If reset_at_start is True, the first sample will get delayed by one scrape and a virtual zero-value is inserted instead.
@@ -69,6 +85,21 @@ class TotalCounterCollection:
             self._counters[key] = TotalCounter(label_values, reset_at_start)
         return self._counters[key]
 
-    def collect(self, m: CounterMetricFamily) -> None:
+    def collect(self, m: CounterMetricFamily) -> CounterMetricFamily:
         for counter in self._counters.values():
             counter.collect(m)
+        return m
+    def prune(self) -> None:
+        """
+        Remove all counters that have not been incremented since the last prune() call.
+        This is useful to avoid memory leaks for labelsets that are no longer used.
+        """
+        prune_age_threshold = (datetime.now(tz=timezone.utc) - self._max_age).timestamp()
+        for (key, counter) in self._counters.items():
+            if counter.last_increment_timestamp() < prune_age_threshold:
+                del self._counters[key]
+
+        while len(self._counters) > self._max_count:
+            # remove the oldest counter
+            oldest_key = min(self._counters.keys(), key=lambda k: self._counters[k].last_increment_timestamp())
+            del self._counters[oldest_key]

@@ -13,7 +13,7 @@ def decisions() -> GaugeMetricFamily:
 def decisions_total() -> CounterMetricFamily:
     return CounterMetricFamily(
         "crowdsec_decisions_total",
-        "Total decisions fetched from /v1/decisions since exporter start",
+        "Total decisions by offender",
         labels=Alert.total_metric_labels()
     )
 
