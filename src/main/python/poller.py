@@ -113,6 +113,7 @@ class CrowdsecPoller:
     def poll_alerts(self) -> Sequence[Alert]:
         def query_params(ago: str | None = None, limit: int = 1000) -> str:
             params = f"?limit={limit}"
+            params += "&sort=ASC" # automatically sorts by created_at: see https://github.com/crowdsecurity/crowdsec/blob/d3b1c0ba8c19384a72c30fc83f80161329baeb21/pkg/database/alerts.go#L850
             if ago is not None:
                 params += f"&since={ago}"
             return params
