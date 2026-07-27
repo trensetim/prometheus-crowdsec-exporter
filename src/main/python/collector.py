@@ -28,6 +28,7 @@ class CrowdsecCollector(Collector):
     _metric_polls_total: int = 0
     _metric_poll_errors_total: int = 0
     _metric_last_poll_duration_seconds: float = 0
+    _metric_last_heartbeat_duration_seconds: float = 0
     _metric_decisions_total: TotalCounterCollection
     _metric_alerts_total: TotalCounterCollection
     _metric_events_total: TotalCounterCollection
@@ -55,6 +56,8 @@ class CrowdsecCollector(Collector):
             log.info("collector_startup_increment_discarded", alerts_count=len(alerts))
 
     def collect(self) -> Iterable[Metric]:
+
+        self._beat_the_heart()
         (alerts, allowlists) = self._poll() or ([], [])
 
         self._update_totals(
@@ -69,6 +72,7 @@ class CrowdsecCollector(Collector):
         yield metrics.polls_total(self._metric_polls_total)
         yield metrics.poll_errors_total(self._metric_poll_errors_total)
         yield metrics.last_poll_duration_seconds(self._metric_last_poll_duration_seconds)
+        yield metrics.last_heartbeat_duration_seconds(self._metric_last_heartbeat_duration_seconds)
 
         yield self._collect_decisions(alerts)
         yield self._collect_alerts(alerts)
@@ -95,6 +99,13 @@ class CrowdsecCollector(Collector):
 
         self._last_allowlist_names = {a.name for a in allowlists}
         self._last_allowlist_items = {item.value for allowlist in allowlists for item in allowlist.items}
+
+    def _beat_the_heart(self) -> None:
+        start = time.monotonic()
+        self._poller.beat_the_heart()
+        end = time.monotonic()
+        self._metric_last_heartbeat_duration_seconds = round(end - start, 3)
+        log.info("heartbeat_success", duration_seconds = self._metric_last_heartbeat_duration_seconds)
 
     def _poll(self) -> tuple[list[Alert], list[Allowlist]] | None:
         """

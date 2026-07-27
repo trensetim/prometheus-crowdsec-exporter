@@ -187,3 +187,11 @@ def last_poll_duration_seconds(value: float) -> GaugeMetricFamily:
     )
     g.add_metric([], value)
     return g
+
+def last_heartbeat_duration_seconds(value: float) -> GaugeMetricFamily:
+    g = GaugeMetricFamily(
+        "crowdsec_last_heartbeat_duration_seconds",
+        "Duration of the last LAPI heartbeat in seconds",
+    )
+    g.add_metric([], value)
+    return g

@@ -103,6 +103,15 @@ class CrowdsecPoller:
     def _assert_jwt(self) -> str:
         return self._credentials.jwt(self._http_client)
 
+    def beat_the_heart(self) -> None:
+        jwt = self._assert_jwt()
+        response = self._http_client.get(
+            "/v1/heartbeat",
+            headers={"Authorization": f"Bearer {jwt}"},
+        )
+        response.raise_for_status()
+        log.info("heartbeat")
+
     def poll_allowlists(self) -> list:
         # https://www.reddit.com/r/CrowdSec/comments/1rj3459/allowlist_items_not_appearing_on_lapi_response/
         # the `with_content=true` query param is not yet documented on https://crowdsecurity.github.io/api_doc/#/watchers/getAllowlists
