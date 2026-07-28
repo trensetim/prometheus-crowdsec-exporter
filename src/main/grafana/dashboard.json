@@ -3,7 +3,7 @@
   "kind": "Dashboard",
   "metadata": {
     "name": "afs37slvy77k0d",
-    "generation": 56,
+    "generation": 59,
     "creationTimestamp": "2026-07-24T06:22:25Z",
     "labels": {},
     "annotations": {}
@@ -254,12 +254,13 @@
                 },
                 "legend": {
                   "calcs": [
-                    "mean"
+                    "mean",
+                    "last"
                   ],
-                  "displayMode": "list",
+                  "displayMode": "table",
                   "enableFacetedFilter": false,
                   "overflow": "ellipsis",
-                  "placement": "bottom",
+                  "placement": "right",
                   "showLegend": true
                 },
                 "tooltip": {
@@ -2743,7 +2744,7 @@
                       "version": "v0",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "crowdsec_allowlist_items_total",
+                        "expr": "count(crowdsec_allowlist_items)",
                         "legendFormat": "Items",
                         "range": true
                       },
@@ -3321,9 +3322,7 @@
                   "multiLane": false
                 },
                 "legend": {
-                  "calcs": [
-                    "mean"
-                  ],
+                  "calcs": [],
                   "displayMode": "list",
                   "enableFacetedFilter": false,
                   "overflow": "ellipsis",
@@ -4335,7 +4334,7 @@
             "kind": "RowsLayoutRow",
             "spec": {
               "title": "Overview (Selected Time Range)",
-              "collapse": true,
+              "collapse": false,
               "hideHeader": false,
               "layout": {
                 "kind": "GridLayout",
