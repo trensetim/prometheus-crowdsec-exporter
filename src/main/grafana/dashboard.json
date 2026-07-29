@@ -3,7 +3,7 @@
   "kind": "Dashboard",
   "metadata": {
     "name": "afs37slvy77k0d",
-    "generation": 60,
+    "generation": 61,
     "creationTimestamp": "2026-07-24T06:22:25Z",
     "labels": {},
     "annotations": {}
@@ -4114,6 +4114,7 @@
                     "options": {
                       "excludeByName": {
                         "Time": true,
+                        "Time (min)": true,
                         "Value": true,
                         "__name__": true,
                         "alert_id": true,
@@ -4126,7 +4127,7 @@
                         "origin": true,
                         "scope": true,
                         "simulated": true,
-                        "until": true,
+                        "until": false,
                         "uuid": true
                       },
                       "includeByName": {},
@@ -4153,6 +4154,21 @@
                 },
                 {
                   "kind": "Transformation",
+                  "group": "convertFieldType",
+                  "spec": {
+                    "options": {
+                      "conversions": [
+                        {
+                          "destinationType": "time",
+                          "targetField": "Until"
+                        }
+                      ],
+                      "fields": {}
+                    }
+                  }
+                },
+                {
+                  "kind": "Transformation",
                   "group": "sortBy",
                   "spec": {
                     "options": {
@@ -4160,20 +4176,9 @@
                       "sort": [
                         {
                           "desc": true,
-                          "field": "Time"
+                          "field": "Until"
                         }
                       ]
-                    }
-                  }
-                },
-                {
-                  "kind": "Transformation",
-                  "group": "formatTime",
-                  "spec": {
-                    "options": {
-                      "outputFormat": "YYYY-MM-DD HH:mm:ss",
-                      "timeField": "Time",
-                      "useTimezone": true
                     }
                   }
                 }
