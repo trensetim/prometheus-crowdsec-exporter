@@ -267,4 +267,5 @@ class CrowdsecCollector(Collector):
             grand_total_label_values = alert.grand_total_metric_label_values()
             alerts_totals.increment(label_values, grand_total_label_values, 1, reset_at_start)
             events_totals.increment(label_values, grand_total_label_values, alert.events_count, reset_at_start)
-            decisions_totals.increment(label_values, grand_total_label_values, len(alert.decisions), reset_at_start)
+            for (decision_grand_total_label_values, count) in alert.decisions_grand_total_metric_label_values():
+                decisions_totals.increment(label_values, decision_grand_total_label_values, count, reset_at_start)

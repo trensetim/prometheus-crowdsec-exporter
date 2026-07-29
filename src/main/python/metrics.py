@@ -13,7 +13,7 @@ def decisions_grand_total() -> CounterMetricFamily:
     return CounterMetricFamily(
         "crowdsec_decisions_grand_total",
         "Grand total of decisions by country, network and scenario",
-        labels=Alert.grand_total_metric_labels()
+        labels=Alert.decisions_grand_total_metric_labels()
     )
 def events_count_grand_total() -> CounterMetricFamily:
     return CounterMetricFamily(

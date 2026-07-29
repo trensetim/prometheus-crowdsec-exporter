@@ -3,7 +3,7 @@
   "kind": "Dashboard",
   "metadata": {
     "name": "afs37slvy77k0d",
-    "generation": 59,
+    "generation": 60,
     "creationTimestamp": "2026-07-24T06:22:25Z",
     "labels": {},
     "annotations": {}
@@ -56,12 +56,12 @@
                         "disableTextWrap": false,
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "sum(crowdsec_decisions_grand_total)",
+                        "expr": "sum by (origin)(crowdsec_decisions_grand_total)",
                         "format": "time_series",
                         "fullMetaSearch": false,
                         "includeNullMetadata": true,
                         "instant": false,
-                        "legendFormat": "Total",
+                        "legendFormat": "Total {{origin}}",
                         "range": true,
                         "useBackend": false
                       },
@@ -83,9 +83,9 @@
                       "version": "v0",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "sum(increase(crowdsec_decisions_grand_total[1d]))",
+                        "expr": "sum by (origin)(increase(crowdsec_decisions_grand_total[1d]))",
                         "instant": false,
-                        "legendFormat": "Last Day",
+                        "legendFormat": "Last Day {{origin}}",
                         "range": true
                       },
                       "labels": {
@@ -222,10 +222,10 @@
                       "version": "v0",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "sum(rate(crowdsec_decisions_grand_total{}[1d]))*60*60*24",
+                        "expr": "sum by (origin)(rate(crowdsec_decisions_grand_total{}[1d]))*60*60*24",
                         "instant": false,
                         "interval": "",
-                        "legendFormat": "Decisions",
+                        "legendFormat": "Decisions {{origin}}",
                         "range": true
                       },
                       "labels": {
@@ -2051,12 +2051,12 @@
                         "disableTextWrap": false,
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "floor(sum(increase(crowdsec_decisions_grand_total[$__range])))",
+                        "expr": "floor(sum by (origin)(increase(crowdsec_decisions_grand_total[$__range])))",
                         "format": "time_series",
                         "fullMetaSearch": false,
                         "includeNullMetadata": true,
                         "instant": false,
-                        "legendFormat": "__auto",
+                        "legendFormat": "{{origin}}",
                         "range": true,
                         "useBackend": false
                       },
@@ -2083,7 +2083,7 @@
                 "colorMode": "none",
                 "graphMode": "area",
                 "justifyMode": "auto",
-                "orientation": "auto",
+                "orientation": "horizontal",
                 "percentChangeColorMode": "standard",
                 "reduceOptions": {
                   "calcs": [
@@ -2094,7 +2094,7 @@
                 },
                 "showPercentChange": false,
                 "text": {},
-                "textMode": "value",
+                "textMode": "value_and_name",
                 "wideLayout": true
               },
               "fieldConfig": {
@@ -3291,10 +3291,10 @@
                       "version": "v0",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "sum(idelta(crowdsec_decisions_grand_total{}[$__rate_interval]))",
+                        "expr": "sum by (origin)(idelta(crowdsec_decisions_grand_total{}[$__rate_interval]))",
                         "instant": false,
                         "interval": "",
-                        "legendFormat": "Decisions",
+                        "legendFormat": "Decisions {{origin}}",
                         "range": true
                       },
                       "labels": {
@@ -4044,7 +4044,7 @@
                       "spec": {
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "crowdsec_decisions",
+                        "expr": "crowdsec_decisions{origin=\"crowdsec\"}",
                         "format": "table",
                         "instant": false,
                         "legendFormat": "__auto",

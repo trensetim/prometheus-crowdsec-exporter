@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from typing import Type, Any
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -259,6 +260,39 @@ class Alert:
             self.source.as_number,
             self.source.as_name,
         ]
+
+    @staticmethod
+    def decisions_grand_total_metric_labels() -> list[str]:
+        return [
+            "scenario",
+            "country",
+            "as_number",
+            "as_name",
+            "origin"
+        ]
+
+    def decisions_grand_total_metric_label_values(self) -> Iterable[tuple[list[str],int]]:
+        decisions_by_origin = {}
+        for d in self.decisions:
+            origin = d.origin
+            if origin not in decisions_by_origin:
+                decisions_by_origin[origin] = 0
+            decisions_by_origin[origin] += 1
+
+        result : dict[str,tuple[list[str], int]] = {}
+        for origin, count in decisions_by_origin.items():
+            result[origin] = (
+                [
+                    self.scenario,
+                    self.source.country,
+                    self.source.as_number,
+                    self.source.as_name,
+                    origin
+                ],
+                count
+            )
+
+        return list(result.values())
 
 def _parse_meta(raw: Any) -> dict[str, str]:
     if not isinstance(raw, list):
