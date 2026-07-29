@@ -13,7 +13,6 @@ from models import Alert, Allowlist
 
 log = get_logger(__name__)
 
-
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-few-public-methods
 class CrowdsecCollector(Collector):
@@ -45,6 +44,7 @@ class CrowdsecCollector(Collector):
 
         if not config.metrics_retain_counter_startup_increments:
             # this is the "default" behavior, to avoid counter resets after exporter restarts
+            log.info("initial_poll_running")
             (alerts, _) = self._poll()
             self._update_totals(
                 alerts,
