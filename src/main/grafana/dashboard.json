@@ -3,7 +3,7 @@
   "kind": "Dashboard",
   "metadata": {
     "name": "afs37slvy77k0d",
-    "generation": 61,
+    "generation": 62,
     "creationTimestamp": "2026-07-24T06:22:25Z",
     "labels": {},
     "annotations": {}
@@ -365,6 +365,21 @@
                         "id": "color",
                         "value": {
                           "fixedColor": "blue",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Decisions crowdsec"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "purple",
                           "mode": "fixed"
                         }
                       }
@@ -3431,6 +3446,21 @@
                         "id": "color",
                         "value": {
                           "fixedColor": "blue",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Decisions crowdsec"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "purple",
                           "mode": "fixed"
                         }
                       }
