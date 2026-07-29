@@ -17,11 +17,16 @@ def _read_bind_port() -> int:
 
 def _read_version() -> str:
     """Assumes a version.txt file is present in the same directory as this script"""
-    current_file_path = os.path.realpath(__file__)
-    current_file_dir = os.path.dirname(current_file_path)
-    version_file_path = os.path.join(current_file_dir, "version.txt")
-    with open(version_file_path, "r", encoding="utf-8") as version_file:
-        return version_file.read().strip()
+    return _read_file_content("version.txt")
+
+def _read_file_content(file_path: str) -> str:
+    """Reads the content of a file and returns it as a string"""
+    if not file_path.startswith("/"):
+        script_path = os.path.realpath(__file__)
+        script_dir = os.path.dirname(script_path)
+        file_path = os.path.join(script_dir, file_path)
+    with open(file_path, "r", encoding="utf-8") as file:
+        return file.read().strip()
 
 # pylint: disable=too-many-instance-attributes
 @dataclass
@@ -72,3 +77,8 @@ class Config:
 
         metrics_counter_max_age_seconds = int(os.getenv("METRICS_COUNTER_MAX_AGE_SECONDS", str(5*60))) # 5min
         self.metrics_counter_max_age = timedelta(seconds=metrics_counter_max_age_seconds)
+
+        if self.machine_id.startswith("file:"):
+            self.machine_id = _read_file_content(self.machine_id[5:])
+        if self.machine_password.startswith("file:"):
+            self.machine_password = _read_file_content(self.machine_password[5:])

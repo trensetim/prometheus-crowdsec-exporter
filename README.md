@@ -74,18 +74,18 @@ The exporter polls the LAPI on every `/metrics` scrape request by Prometheus and
 
 # Configuration (Environment variables)
 
-| Variable                                    | Default         | Description                                                       |
-| ------------------------------------------- | --------------- | ----------------------------------------------------------------- |
-| `CROWDSEC_LAPI_URL`                         | none (required) | e.g. `http://crowdsec.crowdsec-monitoring.svc.cluster.local:8080` |
-| `CROWDSEC_MACHINE_ID`                       | none (required) | used for OAuth login                                              |
-| `CROWDSEC_MACHINE_PASSWORD`                 | none (required) | used for OAuth login                                              |
-| `BIND_PORT`                                 | `8001`          | Bind port for the `/metrics` HTTP endpoint                        |
-| `BIND_PORT`                                 | `0.0.0.0`       | Bind address for the `/metrics` endpoint                          |
-| `LOG_LEVEL`                                 | `INFO`          | `DEBUG` / `INFO` / `WARNING` / `ERROR`                            |
-| `CROWDSEC_LAPI_HTTP_TIMEOUT_SECONDS`        | `10`            | Timeout for HTTP communication with CrowdSec Local-API            |
-| `METRICS_RETAIN_COUNTER_STARTUP_INCREMENTS` | `false`         | (or `true`) See [high cardinality](#high-cardinality) below       |
-| `METRICS_COUNTER_MAX_COUNT`                 | `10000`         | See [high cardinality](#high-cardinality) below                   |
-| `METRICS_COUNTER_MAX_AGE_SECONDS`           | `300` (5min)    | See [high cardinality](#high-cardinality) below                   |
+| Variable                                    | Default         | Description                                                          |
+| ------------------------------------------- | --------------- | -------------------------------------------------------------------- |
+| `CROWDSEC_LAPI_URL`                         | none (required) | e.g. `http://crowdsec.crowdsec-monitoring.svc.cluster.local:8080`    |
+| `CROWDSEC_MACHINE_ID`                       | none (required) | Used for OAuth login. Can be `file:/etc/somefile` to read from there |
+| `CROWDSEC_MACHINE_PASSWORD`                 | none (required) | Used for OAuth login. Can be `file:/etc/somefile` to read from there |
+| `BIND_PORT`                                 | `8001`          | Bind port for the `/metrics` HTTP endpoint                           |
+| `BIND_HOST`                                 | `0.0.0.0`       | Bind address for the `/metrics` endpoint                             |
+| `LOG_LEVEL`                                 | `INFO`          | `DEBUG` / `INFO` / `WARNING` / `ERROR`                               |
+| `CROWDSEC_LAPI_HTTP_TIMEOUT_SECONDS`        | `10`            | Timeout for HTTP communication with CrowdSec Local-API               |
+| `METRICS_RETAIN_COUNTER_STARTUP_INCREMENTS` | `false`         | (or `true`) See [high cardinality](#high-cardinality) below          |
+| `METRICS_COUNTER_MAX_COUNT`                 | `10000`         | See [high cardinality](#high-cardinality) below                      |
+| `METRICS_COUNTER_MAX_AGE_SECONDS`           | `300` (5min)    | See [high cardinality](#high-cardinality) below                      |
 
 ## High Cardinality
 
