@@ -7,6 +7,8 @@ from config import Config
 from collector import CrowdsecCollector
 import logger
 
+from urllib3 import connectionpool
+
 CONFIG: Config
 LOGGER: logging.Logger
 
@@ -21,6 +23,7 @@ def _log_startup_info():
 
 def _init_logging() -> logging.Logger:
     logger.configure(CONFIG.log_level)
+    connectionpool.log = logger.get_logger("urllib3.connectionpool")
     return logger.get_logger("main")
 
 def _start_metrics_server() -> MetricsServer:

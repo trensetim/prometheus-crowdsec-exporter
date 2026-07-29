@@ -98,7 +98,7 @@ class CrowdsecPoller:
             }
         )
 
-        log.info("poller_initialised", {"http": self._http_client, "credentials": self._credentials})
+        log.info("poller_initialised", http=str(self._http_client), credentials=str(self._credentials))
 
     def _assert_jwt(self) -> str:
         return self._credentials.jwt(self._http_client)
@@ -110,7 +110,6 @@ class CrowdsecPoller:
             headers={"Authorization": f"Bearer {jwt}"},
         )
         response.raise_for_status()
-        log.info("heartbeat")
 
     def poll_allowlists(self) -> list:
         # https://www.reddit.com/r/CrowdSec/comments/1rj3459/allowlist_items_not_appearing_on_lapi_response/

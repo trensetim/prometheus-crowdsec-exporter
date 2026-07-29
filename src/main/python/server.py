@@ -1,14 +1,20 @@
 import signal
 import threading
-from wsgiref.simple_server import WSGIServer, make_server
-
+from wsgiref.simple_server import WSGIRequestHandler, WSGIServer, make_server
 from prometheus_client import REGISTRY, CollectorRegistry, make_wsgi_app
-
 
 import logger
 from config import Config
 
 log = logger.get_logger("server")
+
+# we have this here to control logging correctly (the default implementation logs all requests to stdout in a custom format)
+class _RequestHandler(WSGIRequestHandler):
+    # pylint: disable=redefined-builtin
+    def log_message(self, format: str, *args: any):
+        message = format % args
+        addr = self.address_string()
+        log.debug("request", client_address=addr, message=message)
 
 # pylint: disable=too-few-public-methods
 class MetricsServer:
@@ -36,7 +42,11 @@ class MetricsServer:
             start_response(status, headers)
             return [b'Not Found']
 
-        self.wsgi_server = make_server(config.bind_host, config.bind_port, _make_wsgi_app)
+        self.wsgi_server = make_server(
+            config.bind_host, config.bind_port,
+            _make_wsgi_app,
+            server_class=WSGIServer, handler_class=_RequestHandler
+            )
         self.thread = threading.Thread(target=self.wsgi_server.serve_forever)
         self.thread.daemon = True
         self.thread.start()

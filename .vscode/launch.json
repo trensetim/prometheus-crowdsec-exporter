@@ -14,11 +14,13 @@
                 "CROWDSEC_MACHINE_ID": "test",
                 "CROWDSEC_MACHINE_PASSWORD": "GBUXxDyOOptyvMWqykkN5QjwB8HsxVhJcASiDzy7SB4WzTWuK94qrYYad2h2Uh6S",
                 "BIND_PORT": "8001",
-                "LOG_LEVEL": "DEBUG",
-                "APP_VERSION": "0.0.0"
+                "LOG_LEVEL": "INFO",
+                "APP_VERSION": "0.0.0",
+                "PYTHONUNBUFFERED": "1"
             },
             "envFile": "${workspaceFolder}/src/test/compose/lapi-key.env",
-            "preLaunchTask": "prepare-all"
+            "preLaunchTask": "prepare-all",
+            "justMyCode": false
 		}
 	]
 }

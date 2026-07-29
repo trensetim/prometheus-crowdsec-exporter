@@ -122,7 +122,7 @@ class CrowdsecCollector(Collector):
 
             end = time.monotonic()
             self._metric_last_poll_duration_seconds = round(end - start, 3)
-            log.info("poll_success", duration_seconds = self._metric_last_poll_duration_seconds)
+            log.info("poll_success", duration_seconds = self._metric_last_poll_duration_seconds, new_alerts_count = len(alerts), allowlists_count = len(allowlists))
             return (alerts, allowlists)
         except Exception as err: # pylint: disable=broad-exception-caught
             self._metric_poll_errors_total += 1
