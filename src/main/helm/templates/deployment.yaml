@@ -1,0 +1,138 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.nameOverrides.deployment | default (include "name" .) }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds | default 5 }}
+      containers:
+        - name: exporter
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.name }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: metrics
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: metrics
+            timeoutSeconds: 5
+          startupProbe:
+            httpGet:
+              path: /health
+              port: metrics
+            timeoutSeconds: 5
+            initialDelaySeconds: 5
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: CROWDSEC_LAPI_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "configmap-name" . }}
+                  key: lapi_url
+            - name: CROWDSEC_LAPI_HTTP_TIMEOUT_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "configmap-name" . }}
+                  key: lapi_http_timeout_seconds
+            - name: BIND_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "configmap-name" . }}
+                  key: bind_port
+            - name: BIND_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "configmap-name" . }}
+                  key: bind_host
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "configmap-name" . }}
+                  key: log_level
+            - name: METRICS_RETAIN_COUNTER_STARTUP_INCREMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "configmap-name" . }}
+                  key: retain_counter_startup_increment
+            - name: METRICS_COUNTER_MAX_COUNT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "configmap-name" . }}
+                  key: counter_max_count
+            - name: METRICS_COUNTER_MAX_AGE_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "configmap-name" . }}
+                  key: counter_max_age_seconds
+            - name: CROWDSEC_MACHINE_ID
+              value: "file:/etc/crowdsec/machine-credentials/username"
+            - name: CROWDSEC_MACHINE_PASSWORD
+              value: "file:/etc/crowdsec/machine-credentials/password"
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: machine-credentials
+              mountPath: /etc/crowdsec/machine-credentials
+              readOnly: true
+            {{- with .Values.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: machine-credentials
+          secret:
+            secretName: {{ include "machine-credentials-secret-name" . }}
+      {{- with .Values.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

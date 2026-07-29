@@ -32,6 +32,14 @@
                 "start-compose"
             ],
             "dependsOrder": "parallel"
+        },
+        {
+            "label": "deploy helm chart",
+            "type": "shell",
+            "command": "helm upgrade --install prometheus-crowdsec-exporter ./src/main/helm --namespace ingress --create-namespace --values ./src/test/helm-values/applied.values.yaml",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
         }
     ]
 }
