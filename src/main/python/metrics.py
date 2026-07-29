@@ -164,6 +164,15 @@ def exporter_info(version: str) -> InfoMetricFamily:
     m.add_metric(value={"version": version}, labels=[])
     return m
 
+def crowdsec_up(is_up: bool) -> GaugeMetricFamily:
+    m = GaugeMetricFamily(
+        "crowdsec_up",
+        "Whether the CrowdSec instance is up",
+    )
+    is_up_value = 1 if is_up else 0
+    m.add_metric([], is_up_value)
+    return m
+
 def polls_total(current_total: int) -> CounterMetricFamily:
     c = CounterMetricFamily(
         "crowdsec_polls_total",

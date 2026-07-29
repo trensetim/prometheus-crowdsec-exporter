@@ -45,7 +45,10 @@ class CrowdsecCollector(Collector):
         if not config.metrics_retain_counter_startup_increments:
             # this is the "default" behavior, to avoid counter resets after exporter restarts
             log.info("initial_poll_running")
-            (alerts, _) = self._poll()
+            first_poll_result = self._poll()
+            if first_poll_result is None:
+                raise RuntimeError("initial poll failed, cannot start exporter")
+            (alerts, _) = first_poll_result
             self._update_totals(
                 alerts,
                 self._metric_alerts_total,
@@ -56,9 +59,18 @@ class CrowdsecCollector(Collector):
             log.info("collector_startup_increment_discarded", alerts_count=len(alerts))
 
     def collect(self) -> Iterable[Metric]:
+        yield metrics.exporter_info(self._config_version)
 
-        self._beat_the_heart()
-        (alerts, allowlists) = self._poll() or ([], [])
+        poll_result: tuple[list[Alert], list[Allowlist]] | None
+        try:
+            self._beat_the_heart()
+            poll_result = self._poll()
+        except Exception as _: # pylint: disable=broad-exception-caught
+            poll_result = None
+        finally:
+            yield metrics.crowdsec_up(poll_result is not None)
+
+        (alerts, allowlists) = poll_result or ([], [])
 
         self._update_totals(
             alerts,
@@ -68,7 +80,6 @@ class CrowdsecCollector(Collector):
             reset_at_start=True
         )
 
-        yield metrics.exporter_info(self._config_version)
         yield metrics.polls_total(self._metric_polls_total)
         yield metrics.poll_errors_total(self._metric_poll_errors_total)
         yield metrics.last_poll_duration_seconds(self._metric_last_poll_duration_seconds)

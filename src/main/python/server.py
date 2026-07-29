@@ -1,4 +1,5 @@
 import signal
+from socketserver import ThreadingMixIn
 import threading
 from wsgiref.simple_server import WSGIRequestHandler, WSGIServer, make_server
 from prometheus_client import REGISTRY, CollectorRegistry, make_wsgi_app
@@ -42,10 +43,14 @@ class MetricsServer:
             start_response(status, headers)
             return [b'Not Found']
 
+        class ThreadingWSGIServer(ThreadingMixIn, WSGIServer):
+            # copied from prometheus_client/exposition.py#L155 and #L228
+            daemon_threads = True
+
         self.wsgi_server = make_server(
             config.bind_host, config.bind_port,
             _make_wsgi_app,
-            server_class=WSGIServer, handler_class=_RequestHandler
+            server_class=ThreadingWSGIServer, handler_class=_RequestHandler
             )
         self.thread = threading.Thread(target=self.wsgi_server.serve_forever)
         self.thread.daemon = True
