@@ -36,7 +36,7 @@ class Config:
     version: str
     """The current application version"""
 
-    local_api_url: str
+    lapi_url: str
     machine_id: str
     machine_password: str
     http_timeout_seconds: float
@@ -64,7 +64,7 @@ class Config:
 
     def __init__(self) -> None:
         self.version = _read_version()
-        self.local_api_url = _read_required_env("CROWDSEC_LAPI_URL")
+        self.lapi_url = _read_required_env("CROWDSEC_LAPI_URL")
         self.machine_id = _read_required_env("CROWDSEC_MACHINE_ID")
         self.machine_password = _read_required_env("CROWDSEC_MACHINE_PASSWORD")
         self.http_timeout_seconds = float(os.getenv("CROWDSEC_LAPI_HTTP_TIMEOUT_SECONDS", "10"))

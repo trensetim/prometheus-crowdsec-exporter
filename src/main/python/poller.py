@@ -90,7 +90,7 @@ class CrowdsecPoller:
     def __init__(self, config: Config) -> None:
         self._credentials = _CrowdsecCredentials(config.machine_id, config.machine_password)
         self._http_client = _RawHttpClient(
-            base_url=config.local_api_url,
+            base_url=config.lapi_url,
             timeout_seconds=config.http_timeout_seconds,
             default_headers={
                 "Accept": "application/json",

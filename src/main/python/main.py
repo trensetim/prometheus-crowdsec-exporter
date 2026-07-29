@@ -16,9 +16,9 @@ def _log_startup_info():
     LOGGER.info("startup",
         version = CONFIG.version,
         log_level = CONFIG.log_level,
-        port = CONFIG.bind_port,
-        host = CONFIG.bind_host,
-        crowdSecLapiURL = CONFIG.local_api_url,
+        bind_port = CONFIG.bind_port,
+        bind_host = CONFIG.bind_host,
+        lapi_url = CONFIG.lapi_url,
     )
 
 def _init_logging() -> logging.Logger:
