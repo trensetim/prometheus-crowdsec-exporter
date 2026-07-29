@@ -40,13 +40,13 @@ class AlertSource:
             )
 
         return cls(
-            scope = parse_string_field(raw, "scope", ""),
-            value = parse_string_field(raw, "value", ""),
-            ip = parse_string_field(raw, "ip", ""),
-            range = parse_string_field(raw, "range", ""),
-            as_number= parse_string_field(raw, "as_number", ""),
-            as_name = parse_string_field(raw, "as_name", ""),
-            country = parse_string_field(raw, "cn", ""),
+            scope = parse_string_field(raw, "scope", "unknown"),
+            value = parse_string_field(raw, "value", "unknown"),
+            ip = parse_string_field(raw, "ip", "unknown"),
+            range = parse_string_field(raw, "range", "unknown"),
+            as_number= parse_string_field(raw, "as_number", "0"),
+            as_name = parse_string_field(raw, "as_name", "unknown"),
+            country = parse_string_field(raw, "cn", "unknown"),
             latitude = float(raw.get("latitude") or 0.0),
             longitude = float(raw.get("longitude") or 0.0),
         )
