@@ -27,6 +27,8 @@ service:
   port: 8001
 
 # Additional declarations
+labels: {}
+annotations: {}
 podAnnotations: {}
 podLabels: {}
 resources: {}

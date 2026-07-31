@@ -4,6 +4,8 @@ metadata:
   name: {{ include "configmap-name" . }}
   labels:
     {{- include "labels" . | nindent 4 }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
 data:
   lapi_url: {{ .Values.config.lapi_url | quote }}
   bind_port: {{ .Values.service.port | quote }}

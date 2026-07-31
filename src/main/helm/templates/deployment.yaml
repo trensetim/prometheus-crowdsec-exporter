@@ -4,6 +4,8 @@ metadata:
   name: {{ .Values.nameOverrides.deployment | default (include "name" .) }}
   labels:
     {{- include "labels" . | nindent 4 }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
 spec:
   replicas: 1
   selector:

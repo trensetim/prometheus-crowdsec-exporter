@@ -13,6 +13,17 @@ helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | 
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- range $k, $v := .Values.labels }}
+{{ $k }}: {{ $v | quote }}
+{{- end }}
+{{- end }}
+
+{{- define "annotations" -}}
+{{- /* we add the change-cause here such that this definition is never empty */ -}}
+kubernetes.io/change-cause: {{ (printf "%s %s %s %s" .Release.Service .Release.Name (ternary "upgrade" "install" .Release.IsUpgrade) (now | date "2006-01-02 03:04:05")) | quote }}
+{{- range $k, $v := .Values.annotations }}
+{{ $k }}: {{ $v | quote }}
+{{- end }}
 {{- end }}
 
 {{- define "selectorLabels" -}}
