@@ -3,6 +3,7 @@ nameOverrides:
   configmap: null
   crowdsecMachineCredentialsSecret: null
   deployment: null
+  port: null
 
 image:
   name: docker-registry.timtrense.com/tim/prometheus-crowdsec-exporter

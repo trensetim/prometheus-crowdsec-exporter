@@ -41,23 +41,23 @@ spec:
           image: "{{ .Values.image.name }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - name: metrics
+            - name: {{ include "port-name" . }}
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           livenessProbe:
             httpGet:
               path: /health
-              port: metrics
+              port: {{ include "port-name" . }}
             timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /health
-              port: metrics
+              port: {{ include "port-name" . }}
             timeoutSeconds: 5
           startupProbe:
             httpGet:
               path: /health
-              port: metrics
+              port: {{ include "port-name" . }}
             timeoutSeconds: 5
             initialDelaySeconds: 5
           {{- with .Values.resources }}

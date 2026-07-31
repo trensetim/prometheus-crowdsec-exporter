@@ -10,8 +10,8 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
-      targetPort: metrics
+      targetPort: {{ include "port-name" . }}
       protocol: TCP
-      name: metrics
+      name: {{ include "port-name" . }}
   selector:
     {{- include "selectorLabels" . | nindent 4 }}

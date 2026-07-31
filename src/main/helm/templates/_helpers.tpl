@@ -37,3 +37,8 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "machine-credentials-secret-name" -}}
 {{- .Values.nameOverrides.crowdsecMachineCredentialsSecret | default (printf "%s-machine-credentials" (include "name" .)) -}}
 {{- end }}
+
+{{- define "port-name" -}}
+{{- .Values.nameOverrides.port | default "metrics" -}}
+{{- end }}
+
