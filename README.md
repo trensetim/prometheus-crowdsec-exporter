@@ -4,22 +4,27 @@ Data flow:
 
 ```mermaid
 flowchart LR
-    lapi["CrowdSec LAPI (:8080)"]
-    ex["Exporter Container"]
-    prom["Prometheus"]
-    gf["Grafana"]
+    lapi["<img src='https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/crowdsec.svg' height='50'> CrowdSec LAPI"]
+    ex["↗️ Exporter"]
+    prom["<img src='https://github.com/prometheus/prometheus/raw/main/documentation/images/prometheus-logo.svg' width='auto' height='50'/> Prometheus"]
+    gf["<img src='https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Grafana_icon.svg/500px-Grafana_icon.svg.png'  height='50'> Grafana"]
 
-    lapi -- "Decisions/Alerts/Allowlists" --> ex
+    lapi -- "New Decisions & Alerts,
+             all Allowlists
+             (per scrape)" --> ex
     ex -- "Metrics"  --> prom
     prom -- "Metrics Data" --> gf
 ```
 
-... and in direction of access:
+<details>
+<summary>
+... and in direction of access
+</summary>
 
 ```mermaid
 flowchart RL
     lapi["CrowdSec LAPI"]
-    ex["Exporter Container"]
+    ex["↗️ Exporter"]
     prom["Prometheus"]
     gf["Grafana"]
 
@@ -33,59 +38,108 @@ flowchart RL
     gf -- PromQL --> prom
 ```
 
+</details>
+
 The exporter polls the LAPI on every `/metrics` scrape request by Prometheus and yields fresh metrics each time.
 
 # Metrics
 
-## Decisions
+All metrics are prefixed with `crowdsec_`. The following table shows the most-relevant metrics. There are more: see [metric sets](#metric-sets)
 
-| Metric                                                     | Type    | Labels                                                                                                       | Description                                    |
-| ---------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
-| `crowdsec_decisions`                                       | Gauge   | `decisionType`, `origin`, `scenario`, `scope`                                                                | Currently active decisions aggregated by type  |
-| `crowdsec_decisions_details`                               | Gauge   | `decisionType`, `origin`, `scenario`, `scope`, `val`, `decisionId`, `uuid`, `duration`, `until`, `simulated` | One entry per active decision with full detail |
-| `crowdsec_decisions_fetched_total`                         | Counter | –                                                                                                            | Total decisions fetched since exporter start   |
-| `crowdsec_last_successful_decision_poll_timestamp_seconds` | Gauge   | `endpoint`                                                                                                   | Unix timestamp of last successful poll         |
+| Metric                 | Type                              | Labels                                                               | Description                                                                                               |
+| ---------------------- | --------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| alerts_grand_total     | counter                           | scenario, country, as_number, as_name                                | All-time total number of alerts _per labelset_. Most useful as `sum by (somelabel)(increase([$__range]))` |
+| decisions_grand_total  | counter                           | scenario, country, as_number, as_name, origin                        | Like `alerts_grand_total`                                                                                 |
+| events_grand_total     | counter                           | scenario, country, as_number, as_name                                | Like `alerts_grand_total`                                                                                 |
+| alerts_total           | pruned counter                    | [see alert labelset](#full-alert-labelset)                           | A short-time counter, prefixed with a 0-sample upon reset, see [High Cardinality](#high-cardinality)      |
+| decisions_total        | pruned counter                    | [see alert labelset](#full-alert-labelset)                           | Like `alerts_total`                                                                                       |
+| events_total           | pruned counter                    | [see alert labelset](#full-alert-labelset)                           | Like `alerts_total`                                                                                       |
+| allowlists_total       | counter                           |                                                                      | Number of created allowlists                                                                              |
+| allowlists_items_total | counter                           |                                                                      | Number of created allowlists items                                                                        |
+| allowlists             | info                              | allowlist_name, console_managed, description, created_at, updated_at | Details about the individual allowlists                                                                   |
+| allowlist_items        | info                              | allowlist_name, value, description, created_at, expiration           | Details about the individual allowlist items                                                              |
+| alerts                 | info (only new since last scrape) | [see alert labelset](#full-alert-labelset)                           | Details about the individual alerts                                                                       |
+| decisions              | info (only new since last scrape) | [see decision labelset](#full-decision-labelset)                     | Details about the individual alerts                                                                       |
 
-## Alerts
+## Full Alert Labelset
 
-| Metric                                                   | Type    | Labels                                                                                                        | Description                                         |
-| -------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| `crowdsec_alerts`                                        | Gauge   | `scenario`, `simulated`, `remediation`                                                                        | Currently active alerts aggregated by scenario      |
-| `crowdsec_alerts_details`                                | Gauge   | `alertIdentifier`, `uuid`, `machineId`, `createdAt`, `scenario`, `country`, `ip`, `asName`, `decisionType`, … | One entry per alert with full geo and source detail |
-| `crowdsec_alerts_fetched_total`                          | Counter | –                                                                                                             | Total alerts fetched since exporter start           |
-| `crowdsec_last_successful_alerts_poll_timestamp_seconds` | Gauge   | `endpoint`                                                                                                    | Unix timestamp of last successful poll              |
+| Label            | On Counters? | Description                                                 |
+| ---------------- | ------------ | ----------------------------------------------------------- |
+| id               | -            | Simple, incrementing counter inside LAPI                    |
+| uuid             | -            | Random UUID, assigned during alert creation                 |
+| machine_id       | -            | Which CrowdSec machine identified the attack                |
+| scenario         | yes          | Scenario name that triggered the alert                      |
+| scenario_hash    | yes          | Scenario Hash/ID that triggered the alert                   |
+| scenario_version | yes          | Version of the scenario                                     |
+| simulated        | yes          | Maps to the "simulated"-flag in CS LAPI                     |
+| remediation      | yes          | `true/false` the attack was remediated immediately          |
+| ip               | yes          | The offender                                                |
+| subnet           | yes          | The subnet to which the offender belongs                    |
+| country          | yes          | The origin country of the offender                          |
+| as_number        | yes          | The origin BGP AS Network Number (eg. ISP of the offender)  |
+| as_name          | yes          | The origin BGP AS Network Name                              |
+| latitude         | yes          | The inferred geoposition of the offender, based on their IP |
+| longitude        | yes          | The inferred geoposition of the offender, based on their IP |
+| decision_type    | yes          | eg. `ban` or `captcha` (of the first decision)              |
+| decision_scope   | yes          | Either `Ip` or `Subnet` (of the first decision)             |
 
-## Allowlists
+## Full Decision Labelset
 
-| Metric                                                       | Type    | Labels                                                                   | Description                                        |
-| ------------------------------------------------------------ | ------- | ------------------------------------------------------------------------ | -------------------------------------------------- |
-| `crowdsec_allowlists_items`                                  | Gauge   | `name`, `allowlistId`, `consoleManaged`                                  | Number of active (non-expired) items per allowlist |
-| `crowdsec_allowlist_items_detail`                            | Gauge   | `allowlistId`, `name`, `value`, `description`, `expiration`, `isExpired` | One entry per allowlist item with expiry state     |
-| `crowdsec_allowlist_expiring_items`                          | Gauge   | `name`, `allowlistId`, `consoleManaged`                                  | Items expiring within 24 hours                     |
-| `crowdsec_allowlists_fetched_total`                          | Counter | –                                                                        | Total allowlists fetched since exporter start      |
-| `crowdsec_last_successful_allowlists_poll_timestamp_seconds` | Gauge   | `endpoint`                                                               | Unix timestamp of last successful poll             |
+| Label         | Description                                                                             |
+| ------------- | --------------------------------------------------------------------------------------- |
+| alert_id      | Alert from which the decision was derived, simple incrementing counter in LAPI instance |
+| alert_uuid    | Alert from which the decision was derived                                               |
+| decision_id   | Simple incrementing counter in LAPI instance                                            |
+| decision_uuid | Like `alert_uuid`, pendant to `decision_id`                                             |
+| type          | eg. `ban` or `captcha`                                                                  |
+| origin        | Either `crowdsec` or `CAPI`                                                             |
+| scope         | Either `Ip` or `Subnet`                                                                 |
+| value         | The offending IP address or subnet in CIDR notation                                     |
+| duration      | eg. `4h30m` how long the decision will be effective                                     |
+| until         | ISO8601 timestamp of when the decision will be discarded (ie. "creation" + "duration")  |
+| simulated     | Whether the decision originated from a simulated alert                                  |
 
-## Exporter health
+## Metric Sets
 
-| Metric                       | Type    | Labels                   | Description               |
-| ---------------------------- | ------- | ------------------------ | ------------------------- |
-| `crowdsec_poll_errors_total` | Counter | `endpoint`, `error_type` | Failed LAPI poll attempts |
-| `crowdsec_exporter_info`     | Info    | `version`, `git_commit`  | Build metadata            |
+This exporter produces a possibly huge number of metrics with different levels of relevancy. For basic needs, a smaller subset of metrics usually suffices.
+By setting the env var `METRIC_SETS` to a comma-separated list of the following items, one can choose from the following list.
+Additionally, one can restrict the returned metrics even further, by supplying the `name[]` URL query parameter during scrapes, to denote the desired individual metric names (see [prometheus client library docs](https://pkg.go.dev/github.com/prometheus/client_golang/prometheus/promhttp#Handler)).
+
+| Set                   | Metrics                                                                                                   |
+| --------------------- | --------------------------------------------------------------------------------------------------------- |
+| `all`                 | Alias to disable filtering                                                                                |
+| `basic`               | Alias for `exporter, grand_totals, allowlist_totals`                                                      |
+| `default`             | Alias for `exporter, grand_totals, totals, instances, allowlist_totals, allowlist_instances`              |
+| `exporter`            | Information about the exporter itself (eg. `crowdsec_exporter_info` and the python-internal metrics)      |
+| `grand_totals`        | The never-pruned totals for decisions, alerts and events.                                                 |
+| `totals`              | The pruned totals for decisions, alerts and events.                                                       |
+| `instances`           | The pruned type=info metrics for new decisions, alerts and events, since the last scrape.                 |
+| `details`             | Additional metrics for the `instances`, like eg. `alert_created` and `alert_events_count`.                |
+| `allowlist_totals`    | Counters about the allowlists                                                                             |
+| `allowlist_instances` | The current info gauges for allowlists and their items.                                                   |
+| `allowlist_details`   | More details about the allowlists and items, like eg. `allowlist_created` or `allowlist_item_expiration`. |
 
 # Configuration (Environment variables)
 
-| Variable                                    | Default         | Description                                                          |
-| ------------------------------------------- | --------------- | -------------------------------------------------------------------- |
-| `CROWDSEC_LAPI_URL`                         | none (required) | e.g. `http://crowdsec.crowdsec-monitoring.svc.cluster.local:8080`    |
-| `CROWDSEC_MACHINE_ID`                       | none (required) | Used for OAuth login. Can be `file:/etc/somefile` to read from there |
-| `CROWDSEC_MACHINE_PASSWORD`                 | none (required) | Used for OAuth login. Can be `file:/etc/somefile` to read from there |
-| `BIND_PORT`                                 | `8001`          | Bind port for the `/metrics` HTTP endpoint                           |
-| `BIND_HOST`                                 | `0.0.0.0`       | Bind address for the `/metrics` endpoint                             |
-| `LOG_LEVEL`                                 | `INFO`          | `DEBUG` / `INFO` / `WARNING` / `ERROR`                               |
-| `CROWDSEC_LAPI_HTTP_TIMEOUT_SECONDS`        | `10`            | Timeout for HTTP communication with CrowdSec Local-API               |
-| `METRICS_RETAIN_COUNTER_STARTUP_INCREMENTS` | `false`         | (or `true`) See [high cardinality](#high-cardinality) below          |
-| `METRICS_COUNTER_MAX_COUNT`                 | `10000`         | See [high cardinality](#high-cardinality) below                      |
-| `METRICS_COUNTER_MAX_AGE_SECONDS`           | `300` (5min)    | See [high cardinality](#high-cardinality) below                      |
+| Variable                                    | Default      | Description                                                          |
+| ------------------------------------------- | ------------ | -------------------------------------------------------------------- |
+| `CROWDSEC_LAPI_URL`                         | (required)   | e.g. `http://crowdsec.crowdsec-monitoring.svc.cluster.local:8080`    |
+| `CROWDSEC_MACHINE_ID`                       | (required)   | Used for OAuth login. Can be `file:/etc/somefile` to read from there |
+| `CROWDSEC_MACHINE_PASSWORD`                 | (required)   | Used for OAuth login. Can be `file:/etc/somefile` to read from there |
+| `BIND_PORT`                                 | `8001`       | Bind port for the `/metrics` HTTP endpoint                           |
+| `BIND_HOST`                                 | `0.0.0.0`    | Bind address for the `/metrics` endpoint                             |
+| `LOG_LEVEL`                                 | `INFO`       | `DEBUG` / `INFO` / `WARNING` / `ERROR`                               |
+| `CROWDSEC_LAPI_HTTP_TIMEOUT_SECONDS`        | `10`         | Timeout for HTTP communication with CrowdSec Local-API               |
+| `METRICS_RETAIN_COUNTER_STARTUP_INCREMENTS` | `false`      | (or `true`) See [high cardinality](#high-cardinality) below          |
+| `METRICS_COUNTER_MAX_COUNT`                 | `10000`      | See [high cardinality](#high-cardinality) below                      |
+| `METRICS_COUNTER_MAX_AGE_SECONDS`           | `300` (5min) | See [high cardinality](#high-cardinality) below                      |
+| `METRIC_SETS`                               | `default`    | Comma-separated list. See [metric sets](#metric-sets).               |
+| `TLS_CERT_FILE`                             | unset        | See [tls](#tls). Must be a path itself.                              |
+| `TLS_KEY_FILE`                              | unset        | See [tls](#tls). Must be a path itself.                              |
+| `TLS_KEY_PASSWORD`                          | unset        | See [tls](#tls). Can be `file:/etc/somefile` to read from there      |
+| `AUTH_USERNAME`                             | unset        | See [auth](#auth). Can be `file:/etc/somefile` to read from there    |
+| `AUTH_PASSWORD`                             | unset        | See [auth](#auth). Can be `file:/etc/somefile` to read from there    |
+| `AUTH_BEARER_TOKEN`                         | unset        | See [auth](#auth). Can be `file:/etc/somefile` to read from there    |
 
 ## High Cardinality
 
@@ -115,3 +169,26 @@ So naturally, the first sample gets delayed by one scrape interval.
 The `METRICS_RETAIN_COUNTER_STARTUP_INCREMENTS` controls whether this will also happen for the very first scrape after a restart of the exporter.
 Setting it to `true` allows to load an initial increment, if the exporter gets installed significantly later than the CrowdSec instance itself.
 Leaving it to the `false` default will cover quick restarts of the exporter where missing a few alerts is less critical than double-counting all of them.
+
+## TLS
+
+The exporter can serve via TLS, such that the metrics about the firewall stay secure during transit.
+When enabling this, properly trusted TLS certificates should be used to prevent MITM-attacks.
+The private key (`TLS_KEY_FILE`) can optionally be encrypted using a given password (`TLS_KEY_PASSWORD`).
+
+When switching to TLS, the `BIND_PORT` will be wrapped by a TLS encryption (ie. no plain-http connectivity anymore).
+
+This setting is strongly recommended, when enabling [auth](#auth).
+
+## Auth
+
+The exporter can optionally require authentication, either via HTTP BasicAuth (Header `Authorization: Basic base64(username:password)`) or via an Bearer-Token (Header `Authorization: Bearer ...`).
+The associated configuration variables are mutually exclusive.
+This setting is recommended to only be used with [tls](#tls), for obvious reasons.
+
+# Dashboard
+
+You can get a Grafana dashboard from [here](./src/main/grafana/dashboard.json).
+It looks roughly like this:
+
+![grafana dashboard screenshot](./src/main/grafana/dashboard-screenshot.png)
