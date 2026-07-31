@@ -35,7 +35,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- .Values.nameOverrides.configmap | default (include "name" .) -}}
 {{- end }}
 {{- define "machine-credentials-secret-name" -}}
-{{- .Values.nameOverrides.crowdsecMachineCredentialsSecret | default (printf "%s-machine-credentials" (include "name" .)) -}}
+{{- .Values.config.machineCredentials.secret.name | default (printf "%s-machine-credentials" (include "name" .)) -}}
 {{- end }}
 
 {{- define "port-name" -}}

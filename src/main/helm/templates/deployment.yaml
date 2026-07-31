@@ -1,11 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.nameOverrides.deployment | default (include "name" .) }}
+  name: {{ .Values.deployment.name | default (include "name" .) }}
   labels:
     {{- include "labels" . | nindent 4 }}
+    {{- range $key, $value := .Values.deployment.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
   annotations:
     {{- include "annotations" . | nindent 4 }}
+    {{- range $key, $value := .Values.deployment.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
 spec:
   replicas: 1
   selector:
@@ -14,7 +20,7 @@ spec:
   template:
     metadata:
       annotations:
-        {{- include "annotations" . | nindent 4 }}
+        {{- include "annotations" . | nindent 8 }}
         {{- range $key, $value := .Values.pod.annotations }}
         {{ $key }}: {{ $value | quote }}
         {{- end }}

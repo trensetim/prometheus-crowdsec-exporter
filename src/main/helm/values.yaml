@@ -2,7 +2,6 @@ nameOverrides:
   release: null # global fullname
   configmap: null
   crowdsecMachineCredentialsSecret: null
-  deployment: null
   port: null
 labels: {}
 annotations: {}
@@ -16,6 +15,11 @@ image:
 service:
   type: ClusterIP
   port: 8001
+  labels: {}
+  annotations: {}
+
+deployment:
+  name: null
   labels: {}
   annotations: {}
 
@@ -42,10 +46,6 @@ pod:
     runAsUser: 1000
     runAsGroup: 1000
 
-
-# can be used with .nameOverrides.crowdsecMachineCredentialsSecret to use an existing secret instead of creating a new one
-useExistingMachineCredentialsSecret: false
-
 config:
   lapi_url: "http://crowdsec-lapi:8080"
   lapi_http_timeout_seconds: null # default 10
@@ -56,5 +56,11 @@ config:
   counter_max_age_seconds: null # default 300
 
   # required
-  machine_id: null
-  machine_password: null
+  machineCredentials:
+    id: null
+    password: null
+    secret:
+      enabled: true # whether to deploy the secret (false uses an existing one)
+      name: null
+      labels: {}
+      annotations: {}
