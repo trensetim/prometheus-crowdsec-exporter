@@ -65,7 +65,7 @@ class TlsConfig:
                 txt_key = _read_file_content(key_file)
                 if "-----BEGIN CERTIFICATE-----" not in txt_cert:
                     raise ValueError(f"TLS certificate file {cert_file!r} does not contain a valid PEM-encoded certificate.")
-                if "-----BEGIN PRIVATE KEY-----" not in txt_key:
+                if "-----BEGIN " not in txt_key or not "PRIVATE KEY-----" in txt_key:
                     raise ValueError(f"TLS key file {key_file!r} does not contain a valid PEM-encoded private key.")
         except Exception as exc:
             raise ValueError(f"Error reading TLS certificate or key file: {exc}") from exc
