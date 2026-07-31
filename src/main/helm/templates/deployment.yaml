@@ -113,25 +113,47 @@ spec:
                   name: {{ include "configmap-name" . }}
                   key: counter_max_age_seconds
             - name: CROWDSEC_MACHINE_ID
-              value: "file:/etc/crowdsec/machine-credentials/username"
+              value: "file:/etc/prometheus-crowdsec-exporter/machine-credentials/username"
             - name: CROWDSEC_MACHINE_PASSWORD
-              value: "file:/etc/crowdsec/machine-credentials/password"
+              value: "file:/etc/prometheus-crowdsec-exporter/machine-credentials/password"
             {{- if .Values.tls.enabled }}
             - name: TLS_CERT_PATH
-              value: "/etc/crowdsec/tls/tls.crt"
+              value: "/etc/prometheus-crowdsec-exporter/tls/tls.crt"
             - name: TLS_KEY_PATH
-              value: "/etc/crowdsec/tls/tls.key"
+              value: "/etc/prometheus-crowdsec-exporter/tls/tls.key"
             {{- end }}
+
+            {{- if .Values.auth.enabled }}
+            {{- if .Values.auth.basic.enabled }}
+            - name: AUTH_USERNAME
+              value: "file:/etc/prometheus-crowdsec-exporter/auth/username"
+            - name: AUTH_PASSWORD
+              value: "file:/etc/prometheus-crowdsec-exporter/auth/password"
+            {{- else if .Values.auth.token.enabled }}
+            - name: AUTH_BEARER_TOKEN
+              value: "file:/etc/prometheus-crowdsec-exporter/auth/token"
+            {{- else }}
+            {{- fail "If .auth.enabled is true, either .auth.basic.enabled or .auth.token.enabled must be true" -}}
+            {{- end }}
+            {{- end }}
+
             {{- with .Values.pod.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
           volumeMounts:
             - name: machine-credentials
-              mountPath: /etc/crowdsec/machine-credentials
+              mountPath: /etc/prometheus-crowdsec-exporter/machine-credentials
               readOnly: true
+            {{- if .Values.tls.enabled }}
             - name: tls-secret
-              mountPath: /etc/crowdsec/tls
+              mountPath: /etc/prometheus-crowdsec-exporter/tls
               readOnly: true
+            {{- end }}
+            {{- if .Values.auth.enabled }}
+            - name: auth-secret
+              mountPath: /etc/prometheus-crowdsec-exporter/auth
+              readOnly: true
+            {{- end }}
             {{- with .Values.pod.volumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -143,6 +165,11 @@ spec:
         - name: tls-secret
           secret:
             secretName: {{ include "tls-secret-name" . }}
+        {{- end }}
+        {{- if .Values.auth.enabled }}
+        - name: auth-secret
+          secret:
+            secretName: {{ include "auth-secret-name" . }}
         {{- end }}
       {{- with .Values.pod.volumes }}
         {{- toYaml . | nindent 8 }}

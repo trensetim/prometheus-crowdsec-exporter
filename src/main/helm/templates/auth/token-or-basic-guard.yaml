@@ -1,0 +1,11 @@
+{{- if .Values.auth.enabled -}}
+
+{{- if and .Values.auth.basic.enabled .Values.auth.token.enabled -}}
+{{- fail "auth.basic.enabled and auth.token.enabled are mutually exclusive" -}}
+{{- end -}}
+
+{{- if and (empty .Values.auth.basic.enabled) (empty .Values.auth.token.enabled) -}}
+{{- fail "If .auth.enabled is true, either .auth.basic.enabled or .auth.token.enabled must be true" -}}
+{{- end -}}
+
+{{- end -}}

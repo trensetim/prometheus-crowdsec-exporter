@@ -51,6 +51,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "tls-secret-name" -}}
 {{- .Values.tls.secret.name | default (printf "%s-tls" (include "name" .)) -}}
 {{- end }}
+{{- define "auth-secret-name" -}}
+{{- .Values.auth.secret.name | default (printf "%s-auth" (include "name" .)) -}}
+{{- end }}
 
 {{- define "certificate-commonName" -}}
 {{- default (include "service-name" .) .Values.tls.certManager.certificate.commonName -}}

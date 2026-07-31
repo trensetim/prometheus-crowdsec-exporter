@@ -135,6 +135,12 @@ class AuthConfig:
         if (username is not None) and (bearer_token is not None):
             raise ValueError("AUTH_USERNAME/AUTH_PASSWORD and AUTH_BEARER_TOKEN are mutually exclusive.")
 
+        if username is not None and username.startswith("file:"):
+            username = _read_file_content(username[5:])
+        if password is not None and password.startswith("file:"):
+            password = _read_file_content(password[5:])
+        if bearer_token is not None and bearer_token.startswith("file:"):
+            bearer_token = _read_file_content(bearer_token[5:])
         return AuthConfig(username=username, password=password, bearer_token=bearer_token)
 
 # pylint: disable=too-many-instance-attributes

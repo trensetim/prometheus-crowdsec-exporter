@@ -70,6 +70,22 @@ config:
       labels: {}
       annotations: {}
 
+auth:
+  enabled: false
+  secret:
+    enabled: true # whether to deploy the secret (false uses an existing one, then .name must be given)
+    name: null
+    labels: {}
+    annotations: {}
+  # either basic or token must be configured if .auth.enabled is true
+  basic:
+    enabled: false
+    username: null
+    password: null
+  token:
+    enabled: false
+    token: null
+
 tls:
   enabled: false
   secret:
