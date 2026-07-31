@@ -262,6 +262,11 @@ class CrowdsecCollector(Collector):
             decisions_totals: TotalCounterCollection,
             reset_at_start: bool = False
         ) -> None:
+
+        # prune old counters to save memory
+        for counter_collection in (alerts_totals, events_totals, decisions_totals):
+            counter_collection.prune()
+
         for alert in alerts:
             label_values = alert.total_metric_label_values()
             grand_total_label_values = alert.grand_total_metric_label_values()

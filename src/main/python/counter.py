@@ -120,7 +120,7 @@ class TotalCounterCollection:
 
     def prune(self) -> None:
         """
-        Remove all counters that have not been incremented since the last prune() call.
+        Remove all counters that have not been incremented for some time.
         This is useful to avoid memory leaks for labelsets that are no longer used.
         """
         prune_age_threshold = (datetime.now(tz=timezone.utc) - self._max_age).timestamp()
