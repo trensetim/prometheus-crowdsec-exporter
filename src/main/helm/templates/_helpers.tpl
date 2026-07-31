@@ -32,7 +32,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{- define "configmap-name" -}}
-{{- .Values.nameOverrides.configmap | default (include "name" .) -}}
+{{- .Values.configMap.name | default (include "name" .) -}}
 {{- end }}
 {{- define "machine-credentials-secret-name" -}}
 {{- .Values.config.machineCredentials.secret.name | default (printf "%s-machine-credentials" (include "name" .)) -}}

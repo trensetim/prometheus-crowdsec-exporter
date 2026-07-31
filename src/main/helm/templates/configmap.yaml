@@ -4,13 +4,19 @@ metadata:
   name: {{ include "configmap-name" . }}
   labels:
     {{- include "labels" . | nindent 4 }}
+    {{- range $key, $value := .Values.configMap.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
   annotations:
     {{- include "annotations" . | nindent 4 }}
+    {{- range $key, $value := .Values.configMap.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
 data:
   lapi_url: {{ .Values.config.lapi_url | quote }}
   bind_port: {{ .Values.service.port | quote }}
   bind_host: {{ .Values.config.bind_host | default "0.0.0.0" | quote }}
-  log_level: {{ .Values.log_level | default "info" | quote }}
+  log_level: {{ .Values.config.log_level | default "info" | quote }}
   lapi_http_timeout_seconds: {{ .Values.config.lapi_http_timeout_seconds | default 10 | quote }}
   retain_counter_startup_increment: {{ .Values.config.retain_counter_startup_increment | default false | quote }}
   counter_max_count: {{ .Values.config.counter_max_count | default 10000 | quote }}

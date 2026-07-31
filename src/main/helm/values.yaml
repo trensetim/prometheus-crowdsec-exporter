@@ -1,8 +1,7 @@
 nameOverrides:
   release: null # global fullname
-  configmap: null
-  crowdsecMachineCredentialsSecret: null
   port: null
+
 labels: {}
 annotations: {}
 
@@ -46,6 +45,11 @@ pod:
     runAsUser: 1000
     runAsGroup: 1000
 
+configMap:
+  name: null
+  labels: {}
+  annotations: {}
+
 config:
   lapi_url: "http://crowdsec-lapi:8080"
   lapi_http_timeout_seconds: null # default 10
@@ -60,7 +64,7 @@ config:
     id: null
     password: null
     secret:
-      enabled: true # whether to deploy the secret (false uses an existing one)
+      enabled: true # whether to deploy the secret (false uses an existing one, then .name must be given)
       name: null
       labels: {}
       annotations: {}
