@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "name" . }}
+  name: {{ include "service-name" . }}
   labels:
     {{- include "labels" . | nindent 4 }}
     {{- range $key, $value := .Values.service.labels }}
@@ -15,7 +15,7 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
+    - port: {{ include "port-number" . }}
       targetPort: {{ include "port-name" . }}
       protocol: TCP
       name: {{ include "port-name" . }}

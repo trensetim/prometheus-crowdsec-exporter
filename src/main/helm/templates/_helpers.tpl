@@ -1,6 +1,6 @@
 {{- define "name" -}}
-{{- if .Values.nameOverrides.release }}
-    {{- .Values.nameOverrides.release }}
+{{- if .Values.name }}
+    {{- .Values.name }}
 {{- else }}
     {{- .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
@@ -31,6 +31,9 @@ app.kubernetes.io/name: {{ include "name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
+{{- define "service-name" -}}
+{{- .Values.service.name | default (include "name" .) -}}
+{{- end }}
 {{- define "configmap-name" -}}
 {{- .Values.configMap.name | default (include "name" .) -}}
 {{- end }}
@@ -39,6 +42,13 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{- define "port-name" -}}
-{{- .Values.nameOverrides.port | default "metrics" -}}
+{{- .Values.service.port.name | default "metrics" -}}
+{{- end }}
+{{- define "port-number" -}}
+{{- .Values.service.port.number | default 8001 -}}
+{{- end }}
+
+{{- define "tls-secret-name" -}}
+{{- .Values.tls.secret.name | default (printf "%s-tls" (include "name" .)) -}}
 {{- end }}
 

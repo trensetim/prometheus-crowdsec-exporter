@@ -1,6 +1,4 @@
-nameOverrides:
-  release: null # global fullname
-  port: null
+name: null # overrides the .Release.Name in all resource names
 
 labels: {}
 annotations: {}
@@ -12,8 +10,11 @@ image:
   pullSecrets: []
 
 service:
+  name: null
   type: ClusterIP
-  port: 8001
+  port:
+    number: null # default 8001
+    name: null # default "metrics"
   labels: {}
   annotations: {}
 
