@@ -55,16 +55,19 @@ spec:
             httpGet:
               path: /health
               port: {{ include "port-name" . }}
+              scheme: {{ if .Values.tls.enabled }}HTTPS{{- else }}HTTP{{- end }}
             timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /health
               port: {{ include "port-name" . }}
+              scheme: {{ if .Values.tls.enabled }}HTTPS{{- else }}HTTP{{- end }}
             timeoutSeconds: 5
           startupProbe:
             httpGet:
               path: /health
               port: {{ include "port-name" . }}
+              scheme: {{ if .Values.tls.enabled }}HTTPS{{- else }}HTTP{{- end }}
             timeoutSeconds: 5
             initialDelaySeconds: 5
           {{- with .Values.pod.resources }}
