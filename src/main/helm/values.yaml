@@ -59,6 +59,7 @@ config:
   retain_counter_startup_increment: null # default false
   counter_max_count: null # default 10000
   counter_max_age_seconds: null # default 300
+  metric_sets: default # either a list of values, or a comma-separated string
 
   # required
   machineCredentials:

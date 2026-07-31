@@ -21,6 +21,7 @@
                 "TLS_KEY_FILE": "${workspaceFolder}/src/test/tls/key.pem",
                 "AUTH_USERNAME": "test",
                 "AUTH_PASSWORD": "test",
+                "METRIC_SETS": "all"
             },
             "envFile": "${workspaceFolder}/src/test/compose/lapi-key.env",
             "preLaunchTask": "prepare-all",

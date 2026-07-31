@@ -115,6 +115,11 @@ spec:
                 configMapKeyRef:
                   name: {{ include "configmap-name" . }}
                   key: counter_max_age_seconds
+            - name: METRIC_SETS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "configmap-name" . }}
+                  key: metric_sets
             - name: CROWDSEC_MACHINE_ID
               value: "file:/etc/prometheus-crowdsec-exporter/machine-credentials/username"
             - name: CROWDSEC_MACHINE_PASSWORD

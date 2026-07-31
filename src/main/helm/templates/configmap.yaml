@@ -21,3 +21,8 @@ data:
   retain_counter_startup_increment: {{ .Values.config.retain_counter_startup_increment | default false | quote }}
   counter_max_count: {{ .Values.config.counter_max_count | default 10000 | quote }}
   counter_max_age_seconds: {{ .Values.config.counter_max_age_seconds | default 300 | quote }}
+  {{- if kindIs "slice" .Values.config.metric_sets }}
+  metric_sets: {{ join "," .Values.config.metric_sets }}
+  {{- else }}
+  metric_sets: {{ .Values.config.metric_sets | quote }}
+  {{- end }}

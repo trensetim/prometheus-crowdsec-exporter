@@ -21,6 +21,7 @@ def _log_startup_info():
         lapi_url = CONFIG.lapi_url,
         tls_enabled = str(CONFIG.tls is not None),
         auth_type = CONFIG.auth.get_type() if CONFIG.auth is not None else "null",
+        metric_sets = CONFIG.metric_sets
     )
 
 def _init_logging() -> logging.Logger:

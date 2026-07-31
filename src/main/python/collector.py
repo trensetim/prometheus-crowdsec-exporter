@@ -6,7 +6,7 @@ from prometheus_client.registry import Collector
 from counter import TotalCounterCollection
 
 import metrics
-from config import Config
+from config import Config, MetricSet
 from logger import get_logger
 from poller import CrowdsecPoller
 from models import Alert, Allowlist
@@ -18,6 +18,7 @@ log = get_logger(__name__)
 class CrowdsecCollector(Collector):
 
     _poller: CrowdsecPoller
+    _metric_sets: set[MetricSet]
 
     _last_allowlist_names: set[str] = set()
     """Names of the allowlists of last poll, to prevent double-counting"""
@@ -37,6 +38,7 @@ class CrowdsecCollector(Collector):
     def __init__(self, config: Config) -> None:
         self._config_version = config.version
         self._poller = CrowdsecPoller(config)
+        self._metric_sets = config.metric_sets
         self._metric_decisions_total = TotalCounterCollection(config.metrics_counter_max_count, config.metrics_counter_max_age)
         self._metric_alerts_total = TotalCounterCollection(config.metrics_counter_max_count, config.metrics_counter_max_age)
         self._metric_events_total = TotalCounterCollection(config.metrics_counter_max_count, config.metrics_counter_max_age)
@@ -59,7 +61,8 @@ class CrowdsecCollector(Collector):
             log.info("collector_startup_increment_discarded", alerts_count=len(alerts))
 
     def collect(self) -> Iterable[Metric]:
-        yield metrics.exporter_info(self._config_version)
+        if "exporter" in self._metric_sets:
+            yield metrics.exporter_info(self._config_version)
 
         poll_result: tuple[list[Alert], list[Allowlist]] | None
         try:
@@ -80,33 +83,44 @@ class CrowdsecCollector(Collector):
             reset_at_start=True
         )
 
-        yield metrics.polls_total(self._metric_polls_total)
-        yield metrics.poll_errors_total(self._metric_poll_errors_total)
-        yield metrics.last_poll_duration_seconds(self._metric_last_poll_duration_seconds)
-        yield metrics.last_heartbeat_duration_seconds(self._metric_last_heartbeat_duration_seconds)
+        if "exporter" in self._metric_sets:
+            yield metrics.polls_total(self._metric_polls_total)
+            yield metrics.poll_errors_total(self._metric_poll_errors_total)
+            yield metrics.last_poll_duration_seconds(self._metric_last_poll_duration_seconds)
+            yield metrics.last_heartbeat_duration_seconds(self._metric_last_heartbeat_duration_seconds)
 
-        yield self._collect_decisions(alerts)
-        yield self._collect_alerts(alerts)
-        yield self._collect_alert_created(alerts)
-        yield self._collect_alert_start(alerts)
-        yield self._collect_alert_stop(alerts)
-        yield self._collect_alert_events_count(alerts)
-        yield self._collect_alert_decisions_count(alerts)
-        yield self._collect_allowlists(allowlists)
-        yield self._collect_allowlists_total(allowlists)
-        yield self._collect_allowlist_created(allowlists)
-        yield self._collect_allowlist_updated(allowlists)
-        yield self._collect_allowlist_console_managed(allowlists)
-        yield self._collect_allowlist_items(allowlists)
-        yield self._collect_allowlist_items_total(allowlists)
-        yield self._collect_allowlist_item_created(allowlists)
-        yield self._collect_allowlist_item_expiration(allowlists)
+        if "grand_totals" in self._metric_sets:
+            yield self._metric_decisions_total.collect_grand_totals(metrics.decisions_grand_total())
+            yield self._metric_alerts_total.collect_grand_totals(metrics.alerts_grand_total())
+            yield self._metric_events_total.collect_grand_totals(metrics.events_count_grand_total())
 
-        yield from self._collect_totals(
-            self._metric_decisions_total,
-            self._metric_alerts_total,
-            self._metric_events_total
-        )
+        if "totals" in self._metric_sets:
+            yield self._metric_decisions_total.collect(metrics.decisions_total())
+            yield self._metric_alerts_total.collect(metrics.alerts_total())
+            yield self._metric_events_total.collect(metrics.events_total())
+        if "allowlist_totals" in self._metric_sets:
+            yield self._collect_allowlists_total(allowlists)
+            yield self._collect_allowlist_items_total(allowlists)
+
+        if "instances" in self._metric_sets:
+            yield self._collect_decisions(alerts)
+            yield self._collect_alerts(alerts)
+        if "allowlist_instances" in self._metric_sets:
+            yield self._collect_allowlists(allowlists)
+            yield self._collect_allowlist_items(allowlists)
+
+        if "details" in self._metric_sets:
+            yield self._collect_alert_created(alerts)
+            yield self._collect_alert_start(alerts)
+            yield self._collect_alert_stop(alerts)
+            yield self._collect_alert_events_count(alerts)
+            yield self._collect_alert_decisions_count(alerts)
+        if "allowlist_details" in self._metric_sets:
+            yield self._collect_allowlist_created(allowlists)
+            yield self._collect_allowlist_updated(allowlists)
+            yield self._collect_allowlist_console_managed(allowlists)
+            yield self._collect_allowlist_item_created(allowlists)
+            yield self._collect_allowlist_item_expiration(allowlists)
 
         self._last_allowlist_names = {a.name for a in allowlists}
         self._last_allowlist_items = {item.value for allowlist in allowlists for item in allowlist.items}
@@ -241,19 +255,6 @@ class CrowdsecCollector(Collector):
         for a in alerts:
             m.add_metric(a.decisions_count_metric_label_values(), len(a.decisions))
         return m
-
-    def _collect_totals(self,
-            decisions_totals: TotalCounterCollection,
-            alerts_totals: TotalCounterCollection,
-            events_totals: TotalCounterCollection
-        ) -> Iterable[Metric]:
-        yield decisions_totals.collect(metrics.decisions_total())
-        yield alerts_totals.collect(metrics.alerts_total())
-        yield events_totals.collect(metrics.events_total())
-
-        yield decisions_totals.collect_grand_totals(metrics.decisions_grand_total())
-        yield alerts_totals.collect_grand_totals(metrics.alerts_grand_total())
-        yield events_totals.collect_grand_totals(metrics.events_count_grand_total())
 
     def _update_totals(self,
             alerts: list[Alert],

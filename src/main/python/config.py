@@ -143,6 +143,14 @@ class AuthConfig:
             bearer_token = _read_file_content(bearer_token[5:])
         return AuthConfig(username=username, password=password, bearer_token=bearer_token)
 
+type MetricSet = Literal["exporter", "grand_totals", "totals", "instances", "details", "allowlist_totals", "allowlist_instances", "allowlist_details"]
+
+def _parse_metric_set(raw: str) -> MetricSet:
+    raw = raw.strip().lower()
+    if raw not in ("exporter", "grand_totals", "totals", "instances", "details", "allowlist_totals", "allowlist_instances", "allowlist_details"):
+        raise ValueError(f"Invalid metric set: {raw}")
+    return raw
+
 # pylint: disable=too-many-instance-attributes
 @dataclass
 class Config:
@@ -179,6 +187,9 @@ class Config:
     Maximum age for a non-incremented counter to be kept in memory. If this is exceeded, the counter will be pruned.
     """
 
+    metric_sets: set[MetricSet]
+    """Which kinds of metrics to export."""
+
     def __init__(self) -> None:
         self.version = _read_version()
         self.lapi_url = _read_required_env("CROWDSEC_LAPI_URL")
@@ -202,3 +213,13 @@ class Config:
 
         self.tls = TlsConfig.from_env()
         self.auth = AuthConfig.from_env()
+
+        metric_sets_env = os.getenv("METRIC_SETS", "default")
+        if metric_sets_env.lower() == "default":
+            metric_sets_env = "exporter, grand_totals, totals, instances, allowlist_totals, allowlist_instances"
+        elif metric_sets_env.lower() == "basic":
+            metric_sets_env = "exporter, grand_totals, allowlist_totals"
+        elif metric_sets_env.lower() == "all":
+            metric_sets_env = "exporter, grand_totals, totals, instances, details, allowlist_totals, allowlist_instances"
+
+        self.metric_sets = {_parse_metric_set(s) for s in metric_sets_env.split(",") if s.strip() != ""}
