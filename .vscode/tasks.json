@@ -29,7 +29,8 @@
             "label": "prepare-all",
             "dependsOn": [
                 "init-venv",
-                "start-compose"
+                "start-compose",
+                "mkcerts"
             ],
             "dependsOrder": "parallel"
         },
@@ -37,6 +38,14 @@
             "label": "deploy helm chart",
             "type": "shell",
             "command": "helm upgrade --install prometheus-crowdsec-exporter ./src/main/helm --namespace ingress --create-namespace --values ./src/test/helm-values/applied.values.yaml",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "mkcerts",
+            "type": "shell",
+            "command": "./src/test/tls/mkcerts.sh",
             "options": {
                 "cwd": "${workspaceFolder}"
             }
