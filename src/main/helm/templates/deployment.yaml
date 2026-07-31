@@ -117,9 +117,9 @@ spec:
             - name: CROWDSEC_MACHINE_PASSWORD
               value: "file:/etc/prometheus-crowdsec-exporter/machine-credentials/password"
             {{- if .Values.tls.enabled }}
-            - name: TLS_CERT_PATH
+            - name: TLS_CERT_FILE
               value: "/etc/prometheus-crowdsec-exporter/tls/tls.crt"
-            - name: TLS_KEY_PATH
+            - name: TLS_KEY_FILE
               value: "/etc/prometheus-crowdsec-exporter/tls/tls.key"
             {{- end }}
 
