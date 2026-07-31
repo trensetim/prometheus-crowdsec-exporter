@@ -1,0 +1,47 @@
+{{- if and .Values.tls.enabled .Values.tls.certManager.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ (default (include "name" .) .Values.tls.certManager.certificate.name) | quote }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
+    {{- range $key, $value := .Values.tls.certManager.certificate.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
+    {{- range $key, $value := .Values.tls.certManager.certificate.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  secretName: {{ include "tls-secret-name" . }}
+  secretTemplate:
+    annotations:
+      {{- include "annotations" . | nindent 6 }}
+      {{- range $key, $value := .Values.tls.secret.annotations }}
+      {{ $key }}: {{ $value | quote }}
+      {{- end }}
+    labels:
+      {{- include "labels" . | nindent 6 }}
+      {{- range $key, $value := .Values.tls.secret.labels }}
+      {{ $key }}: {{ $value | quote }}
+      {{- end }}
+  issuerRef:
+    name: {{ include "certmanager-issuer-name" . | quote }}
+    kind: {{ .Values.tls.certManager.issuer.kind }}
+  dnsNames:
+    - {{ include "certificate-commonName" . | quote }}
+    {{- range .Values.tls.certManager.certificate.dnsNames }}
+    - {{ . | quote }}
+    {{- end }}
+  commonName: {{ (include "certificate-commonName" .) | quote }}
+  duration: {{ .Values.tls.certManager.certificate.duration | quote }}
+  {{- if hasSuffix "%" .Values.tls.certManager.certificate.renewBefore }}
+  renewBeforePercentage: {{ .Values.tls.certManager.certificate.renewBefore | replace "%" "" }}
+  {{- else }}
+  renewBefore: {{ .Values.tls.certManager.certificate.renewBefore | quote }}
+  {{- end }}
+  {{- with .Values.tls.certManager.certificate.revisionHistoryLimit }}
+  revisionHistoryLimit: {{ . }}
+  {{- end }}
+{{- end }}

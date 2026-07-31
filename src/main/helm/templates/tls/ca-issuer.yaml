@@ -1,0 +1,23 @@
+{{- if and
+    .Values.tls.enabled
+    .Values.tls.certManager.enabled
+    .Values.tls.certManager.issuer.enabled
+    .Values.tls.certManager.issuer.caCertificate.enabled
+    .Values.tls.certManager.issuer.caCertificate.issuer.enabled
+}}
+apiVersion: cert-manager.io/v1
+kind: {{ .Values.tls.certManager.issuer.caCertificate.issuer.kind }}
+metadata:
+  name: {{ include "certmanager-cacertificate-issuer-name" . | quote }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
+    {{- range $key, $value := .Values.tls.certManager.issuer.caCertificate.issuer.labels }}
+    {{- printf "%s: %s" $key $value | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
+    {{- range $key, $value := .Values.tls.certManager.issuer.caCertificate.issuer.annotations }}
+    {{- printf "%s: %s" $key $value | nindent 4 }}
+    {{- end }}
+spec: {{- toYaml .Values.tls.certManager.issuer.caCertificate.issuer.spec | nindent 2 }}
+{{- end }}

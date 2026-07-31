@@ -52,3 +52,15 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- .Values.tls.secret.name | default (printf "%s-tls" (include "name" .)) -}}
 {{- end }}
 
+{{- define "certificate-commonName" -}}
+{{- default (include "service-name" .) .Values.tls.certManager.certificate.commonName -}}
+{{- end -}}
+{{- define "certmanager-issuer-name" -}}
+{{- .Values.tls.certManager.issuer.name | default (printf "%s-ca" (include "name" .)) -}}
+{{- end -}}
+{{- define "certmanager-cacertificate-name" -}}
+{{- .Values.tls.certManager.issuer.caCertificate.name | default (include "certmanager-issuer-name" .) -}}
+{{- end -}}
+{{- define "certmanager-cacertificate-issuer-name" -}}
+{{- .Values.tls.certManager.issuer.caCertificate.issuer.name | default (printf "%s-selfsigned" (include "name" .)) -}}
+{{- end -}}

@@ -116,12 +116,21 @@ spec:
               value: "file:/etc/crowdsec/machine-credentials/username"
             - name: CROWDSEC_MACHINE_PASSWORD
               value: "file:/etc/crowdsec/machine-credentials/password"
+            {{- if .Values.tls.enabled }}
+            - name: TLS_CERT_PATH
+              value: "/etc/crowdsec/tls/tls.crt"
+            - name: TLS_KEY_PATH
+              value: "/etc/crowdsec/tls/tls.key"
+            {{- end }}
             {{- with .Values.pod.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
           volumeMounts:
             - name: machine-credentials
               mountPath: /etc/crowdsec/machine-credentials
+              readOnly: true
+            - name: tls-secret
+              mountPath: /etc/crowdsec/tls
               readOnly: true
             {{- with .Values.pod.volumeMounts }}
             {{- toYaml . | nindent 12 }}
@@ -130,6 +139,11 @@ spec:
         - name: machine-credentials
           secret:
             secretName: {{ include "machine-credentials-secret-name" . }}
+        {{- if .Values.tls.enabled }}
+        - name: tls-secret
+          secret:
+            secretName: {{ include "tls-secret-name" . }}
+        {{- end }}
       {{- with .Values.pod.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}

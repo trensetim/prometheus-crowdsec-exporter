@@ -1,0 +1,40 @@
+{{- if and
+    .Values.tls.enabled
+    .Values.tls.certManager.enabled
+    .Values.tls.certManager.issuer.enabled
+    .Values.tls.certManager.issuer.caCertificate.enabled
+}}
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "certmanager-cacertificate-name" . | quote }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
+    {{- range $key, $value := .Values.tls.certManager.issuer.caCertificate.labels }}
+    {{- printf "%s: %s" $key $value | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
+    {{- range $key, $value := .Values.tls.certManager.issuer.caCertificate.annotations }}
+    {{- printf "%s: %s" $key $value | nindent 4 }}
+    {{- end }}
+spec:
+  isCA: true
+  secretName: {{ include "certmanager-cacertificate-name" . | quote }}
+  issuerRef:
+    name: {{ include "certmanager-cacertificate-issuer-name" . | quote }}
+    kind: {{ .Values.tls.certManager.issuer.caCertificate.issuer.kind }}
+  commonName: {{ default (include "certmanager-cacertificate-name" .) .Values.tls.certManager.issuer.caCertificate.commonName | quote }}
+  duration: {{ .Values.tls.certManager.issuer.caCertificate.duration | quote }}
+  {{- if hasSuffix "%" .Values.tls.certManager.issuer.caCertificate.renewBefore }}
+  renewBeforePercentage: {{ .Values.tls.certManager.issuer.caCertificate.renewBefore | replace "%" "" }}
+  {{- else }}
+  renewBefore: {{ .Values.tls.certManager.issuer.caCertificate.renewBefore | quote }}
+  {{- end }}
+
+  {{- with .Values.tls.certManager.issuer.caCertificate.revisionHistoryLimit }}
+  revisionHistoryLimit: {{ . }}
+  {{- end }}
+
+{{- end }}

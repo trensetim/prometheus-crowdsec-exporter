@@ -69,3 +69,49 @@ config:
       name: null
       labels: {}
       annotations: {}
+
+tls:
+  enabled: false
+  secret:
+    name: null # if not provided, will be generated from the release name
+    labels: {}
+    annotations: {}
+  certManager: # mutually exclusive with .explicitSecret
+    enabled: true # whether to deploy a cert-manager certificate for the TLS secret. If false, you must provide .cert and .key
+    certificate:
+      name: null
+      labels: {}
+      annotations: {}
+      # additional dns names. The common name will always be added automatically.
+      dnsNames: []
+      commonName: null # defaults to the service name
+      duration: 24h
+      renewBefore: 5% # use % as a suffix if you like: see https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec
+      revisionHistoryLimit: null # do not specify, use global default of cert-manager
+    issuer:
+      name: null
+      kind: Issuer
+      enabled: true # whether to deploy that issuer as well. it will be a CAIssuer with a self-signed CA certificate
+      labels: {}
+      annotations: {}
+      caCertificate:
+        name: null
+        enabled: true # whether to deploy that CA certificate as well. it will be a self-signed CA certificate
+        commonName: null
+        labels: {}
+        annotations: {}
+        duration: 876000h # 100 years
+        renewBefore: 5%
+        revisionHistoryLimit: null
+        issuer:
+          name: null
+          kind: Issuer
+          enabled: true # whether to deploy that issuer as well. it will be a CAIssuer with a self-signed CA certificate
+          labels: {}
+          annotations: {}
+          spec:
+            selfSigned: {}
+  explicitSecret: # mutually exclusive with .certManager
+    enabled: false # whether to deploy a secret with the provided .cert and .key. If false, you must provide an existing secret name in ..name
+    cert_b64_pem: null # must also contain the intermediate chain, if applicable
+    key_b64_pem: null
