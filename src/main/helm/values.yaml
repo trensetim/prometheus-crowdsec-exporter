@@ -131,3 +131,31 @@ tls:
     enabled: false # whether to deploy a secret with the provided .cert and .key. If false, you must provide an existing secret name in ..name
     cert_b64_pem: null # must also contain the intermediate chain, if applicable
     key_b64_pem: null
+
+prometheus:
+  serviceMonitor:
+    name: null
+    enabled: true
+    namespace: null # default to the same namespace as the chart
+    interval: null # default 30s
+    scrapeTimeout: null # default 10s
+    labels: {}
+    relabellings: null
+    spec: {} # inlined, additional YAML
+    endpointsSpec: {} # inlined, additional YAML
+
+  prometheusRule:
+    enabled: true
+    name: null
+    namespace: null # default to the same namespace as the chart
+    labels: {}
+    annotations: {}
+    groupName: null
+    rules:
+      - alert: CrowdSecExporterDown
+        annotations:
+          message: CrowdSec exporter is down for more than 5 minutes.
+        expr: absent(crowdsec_exporter_info{})
+        for: 5m
+        labels:
+          severity: critical

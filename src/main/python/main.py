@@ -19,6 +19,8 @@ def _log_startup_info():
         bind_port = CONFIG.bind_port,
         bind_host = CONFIG.bind_host,
         lapi_url = CONFIG.lapi_url,
+        tls_enabled = str(CONFIG.tls is not None),
+        auth_type = CONFIG.auth.get_type() if CONFIG.auth is not None else "null",
     )
 
 def _init_logging() -> logging.Logger:

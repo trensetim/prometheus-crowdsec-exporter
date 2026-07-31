@@ -1,0 +1,76 @@
+{{ if .Values.prometheus.serviceMonitor.enabled }}
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ default (include "name" .) .Values.prometheus.serviceMonitor.name }}
+  {{- with .Values.prometheus.serviceMonitor.namespace }}
+  namespace: {{ . | default .Release.Namespace }}
+  {{- end }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
+    {{- range $key, $value := .Values.prometheus.serviceMonitor.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  annotations:
+    {{- include "annotations" . | nindent 4 }}
+    {{- range $key, $value := .Values.prometheus.serviceMonitor.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  selector:
+    matchLabels: {{- include "labels" . | nindent 6 }}
+  endpoints:
+    - port: {{ include "port-name" . }}
+      path: /metrics
+      enableHttp2: false
+      {{ with .Values.prometheus.serviceMonitor.interval }}
+      interval: {{ . }}
+      {{ end }}
+      {{ with .Values.prometheus.serviceMonitor.scrapeTimeout }}
+      scrapeTimeout: {{ . }}
+      {{ end }}
+      {{ with .Values.prometheus.serviceMonitor.relabellings }}
+      relabelings: {{- toYaml . | nindent 8 }}
+      {{ end }}
+
+      {{- if .Values.tls.enabled }}
+      scheme: https
+      tlsConfig:
+        ca:
+          secret:
+            name: {{ include "certmanager-cacertificate-name" . | quote }}
+            key: "ca.crt"
+      {{- else }}
+      scheme: http
+      {{- end }}
+
+      {{- if .Values.auth.enabled }}
+      {{- if .Values.auth.token.enabled }}
+      authorization:
+        type: Bearer
+        credentials:
+          name: {{ include "auth-secret-name" . | quote }}
+          key: token
+      {{- end }}
+      {{- if .Values.auth.basic.enabled }}
+      basicAuth:
+        username:
+          name: {{ include "auth-secret-name" . | quote }}
+          key: username
+        password:
+          name: {{ include "auth-secret-name" . | quote }}
+          key: password
+      {{- end }}
+      {{- end }}
+
+      {{- with .Values.prometheus.serviceMonitor.endpointsSpec }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+  {{- with .Values.prometheus.serviceMonitor.spec }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{ end }}
