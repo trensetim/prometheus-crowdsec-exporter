@@ -40,6 +40,7 @@ spec:
       {{- if .Values.tls.enabled }}
       scheme: https
       tlsConfig:
+        serverName: {{ include "certificate-commonName" . | quote }}
         ca:
           secret:
             name: {{ include "certmanager-cacertificate-name" . | quote }}
