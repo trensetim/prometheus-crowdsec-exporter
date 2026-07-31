@@ -13,28 +13,29 @@ spec:
       {{- include "selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- include "annotations" . | nindent 4 }}
+        {{- range $key, $value := .Values.pod.annotations }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
       labels:
         {{- include "labels" . | nindent 8 }}
-        {{- with .Values.podLabels }}
-        {{- toYaml . | nindent 8 }}
+        {{- range $key, $value := .Values.pod.labels }}
+        {{ $key }}: {{ $value | quote }}
         {{- end }}
     spec:
       {{- with .Values.image.pullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.podSecurityContext }}
+      {{- with .Values.pod.securityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds | default 5 }}
+      terminationGracePeriodSeconds: {{ .Values.pod.terminationGracePeriodSeconds | default 5 }}
       containers:
         - name: exporter
-          {{- with .Values.securityContext }}
+          {{- with .Values.pod.containerSecurityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -60,7 +61,7 @@ spec:
               port: {{ include "port-name" . }}
             timeoutSeconds: 5
             initialDelaySeconds: 5
-          {{- with .Values.resources }}
+          {{- with .Values.pod.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -109,32 +110,32 @@ spec:
               value: "file:/etc/crowdsec/machine-credentials/username"
             - name: CROWDSEC_MACHINE_PASSWORD
               value: "file:/etc/crowdsec/machine-credentials/password"
-            {{- with .Values.extraEnv }}
+            {{- with .Values.pod.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
           volumeMounts:
             - name: machine-credentials
               mountPath: /etc/crowdsec/machine-credentials
               readOnly: true
-            {{- with .Values.volumeMounts }}
+            {{- with .Values.pod.volumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
       volumes:
         - name: machine-credentials
           secret:
             secretName: {{ include "machine-credentials-secret-name" . }}
-      {{- with .Values.volumes }}
+      {{- with .Values.pod.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.nodeSelector }}
+      {{- with .Values.pod.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with .Values.pod.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.tolerations }}
+      {{- with .Values.pod.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}

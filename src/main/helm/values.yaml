@@ -4,6 +4,8 @@ nameOverrides:
   crowdsecMachineCredentialsSecret: null
   deployment: null
   port: null
+labels: {}
+annotations: {}
 
 image:
   name: docker-registry.timtrense.com/tim/prometheus-crowdsec-exporter
@@ -11,35 +13,35 @@ image:
   pullPolicy: IfNotPresent
   pullSecrets: []
 
-podSecurityContext: {}
-securityContext:
-  privileged: false
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-    - ALL
-  readOnlyRootFilesystem: true
-  runAsNonRoot: true
-  runAsUser: 1000
-  runAsGroup: 1000
-
 service:
   type: ClusterIP
   port: 8001
+  labels: {}
+  annotations: {}
 
-# Additional declarations
-labels: {}
-annotations: {}
-podAnnotations: {}
-podLabels: {}
-resources: {}
-volumes: []
-volumeMounts: []
-nodeSelector: {}
-tolerations: []
-affinity: {}
-terminationGracePeriodSeconds: null # default 5
-extraEnv: []
+pod:
+  labels: {}
+  annotations: {}
+  resources: {}
+  volumes: []
+  volumeMounts: []
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  terminationGracePeriodSeconds: null # default 5
+  extraEnv: []
+  securityContext: {}
+  containerSecurityContext:
+    privileged: false
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+
 
 # can be used with .nameOverrides.crowdsecMachineCredentialsSecret to use an existing secret instead of creating a new one
 useExistingMachineCredentialsSecret: false
