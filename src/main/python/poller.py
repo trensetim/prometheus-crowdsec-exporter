@@ -1,8 +1,10 @@
 from math import ceil
+import sys
 from typing import Sequence
 
 from datetime import datetime, timezone
 import requests
+import time
 
 from config import Config
 from logger import get_logger
@@ -86,6 +88,7 @@ class CrowdsecPoller:
     _http_client: _RawHttpClient
     _credentials: _CrowdsecCredentials
     _last_alert_created_at: datetime | None = None
+    _batch_size: int
 
     def __init__(self, config: Config) -> None:
         self._credentials = _CrowdsecCredentials(config.machine_id, config.machine_password)
@@ -97,6 +100,7 @@ class CrowdsecPoller:
                 "User-Agent": f"prometheus-crowdsec-exporter/{config.version}",
             }
         )
+        self._batch_size = config.batch_size
 
         log.info("poller_initialised", http=str(self._http_client), credentials=str(self._credentials))
 
@@ -141,13 +145,24 @@ class CrowdsecPoller:
         if self._last_alert_created_at is not None:
             ago = since_to_ago(self._last_alert_created_at)
 
-        while True:
-            raw_batch = self._fetch("/v1/alerts" + query_params(ago))
+        safe_max_batch_count = 100 # firing off more http requests per poll seems broken
+        for batch_no in range(safe_max_batch_count + 1):
+            raw_batch = self._fetch("/v1/alerts" + query_params(ago, self._batch_size))
             if raw_batch is None or len(raw_batch) == 0:
                 break
             alerts += [Alert.parse(i) for i in (raw_batch or [])]
             since = last_created_at(alerts)
             ago = since_to_ago(since)
+
+            if batch_no > 5:
+                # ease off the load during huge polls (eg. startup)
+                time.sleep(0.5 + max(batch_no * 0.1, 1))
+
+            if batch_no >= safe_max_batch_count:
+                log.warning("poll_alerts_max_batch_count_reached", max_batch_count = safe_max_batch_count)
+                # this realistically never happens: we have probably a broken LAPI. Better we slow down as much as possible to avoid hammering the LAPI in a CrashLoop
+                time.sleep(10)
+                sys.exit(1) # better we die and enter a CrashLoopBackoff, than accepting the next scrape and continue hammering
 
         next_last_created_at = last_created_at(alerts)
         if next_last_created_at is not None and self._last_alert_created_at is None:

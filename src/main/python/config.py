@@ -163,6 +163,7 @@ class Config:
     machine_id: str
     machine_password: str
     http_timeout_seconds: float
+    batch_size: int
 
     bind_port: int
     bind_host: str
@@ -196,6 +197,7 @@ class Config:
         self.machine_id = _read_required_env("CROWDSEC_MACHINE_ID")
         self.machine_password = _read_required_env("CROWDSEC_MACHINE_PASSWORD")
         self.http_timeout_seconds = float(os.getenv("CROWDSEC_LAPI_HTTP_TIMEOUT_SECONDS", "10"))
+        self.batch_size = int(os.getenv("CROWDSEC_LAPI_BATCH_SIZE", "10000"))
         self.bind_port = _read_bind_port()
         self.bind_host = os.getenv("BIND_HOST", "0.0.0.0")
         self.log_level = os.getenv("LOG_LEVEL", "INFO").upper()

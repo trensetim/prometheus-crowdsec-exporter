@@ -130,6 +130,7 @@ Additionally, one can restrict the returned metrics even further, by supplying t
 | `BIND_HOST`                                 | `0.0.0.0`    | Bind address for the `/metrics` endpoint                             |
 | `LOG_LEVEL`                                 | `INFO`       | `DEBUG` / `INFO` / `WARNING` / `ERROR`                               |
 | `CROWDSEC_LAPI_HTTP_TIMEOUT_SECONDS`        | `10`         | Timeout for HTTP communication with CrowdSec Local-API               |
+| `CROWDSEC_LAPI_BATCH_SIZE`                  | `10000`      | Number of elements to download from LAPI with a single http request  |
 | `METRICS_RETAIN_COUNTER_STARTUP_INCREMENTS` | `false`      | (or `true`) See [high cardinality](#high-cardinality) below          |
 | `METRICS_COUNTER_MAX_COUNT`                 | `10000`      | See [high cardinality](#high-cardinality) below                      |
 | `METRICS_COUNTER_MAX_AGE_SECONDS`           | `300` (5min) | See [high cardinality](#high-cardinality) below                      |
