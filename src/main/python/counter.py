@@ -124,9 +124,7 @@ class TotalCounterCollection:
         This is useful to avoid memory leaks for labelsets that are no longer used.
         """
         prune_age_threshold = (datetime.now(tz=timezone.utc) - self._max_age).timestamp()
-        for (key, counter) in self._counters.items():
-            if counter.last_increment_timestamp() < prune_age_threshold:
-                del self._counters[key]
+        self._counters = {k: v for k, v in self._counters.items() if v.last_increment_timestamp() > prune_age_threshold}
 
         while len(self._counters) > self._max_count:
             # remove the oldest counter
