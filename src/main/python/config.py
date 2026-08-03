@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Literal
 
+from inotify_simple import INotify, flags
+
 def _read_required_env(key: str) -> str:
     value = os.getenv(key)
     if not value or value == "":
@@ -49,6 +51,14 @@ class TlsConfig:
         password = self._key_password
         self._key_password = None
         return password
+
+    def register_inotify(self) -> INotify:
+        """Registers a watcher for changes in the directory of the certificate and key files."""
+        dirs = {os.path.dirname(self._cert_file_path), os.path.dirname(self._key_file_path)}
+        inotify = INotify()
+        for d in dirs:
+            inotify.add_watch(d, flags.CREATE | flags.DELETE | flags.MODIFY)
+        return inotify
 
     @staticmethod
     def from_env() -> 'TlsConfig | None':

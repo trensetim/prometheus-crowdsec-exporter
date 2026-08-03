@@ -49,77 +49,77 @@ def _check_auth(environ, config: AuthConfig | None) -> bool:
 
     raise ValueError(f"Unsupported authentication type: {config.get_type()}")
 
+class _ThreadingWSGIServer(ThreadingMixIn, WSGIServer):
+    # copied from prometheus_client/exposition.py#L155 and #L228
+    daemon_threads = True
+
 # pylint: disable=too-few-public-methods
 class MetricsServer:
-    wsgi_server: WSGIServer
-    thread: threading.Thread
+    _wsgi_server: WSGIServer
+    _thread: threading.Thread | None
+    _config: Config
 
     def __init__(self, config: Config, prometheus_registry: CollectorRegistry = REGISTRY):
-        prometheus_wsgi_app = make_wsgi_app(prometheus_registry)
+        self.prometheus_wsgi_app = make_wsgi_app(prometheus_registry)
+        self._config = config
+        self._thread = None
+        log.info("configured", port = config.bind_port, host = config.bind_host)
 
-        def _wsgi_execute_app(environ, start_response):
-            path = environ.get("PATH_INFO", "")
+    def _wsgi_execute_app(self, environ, start_response):
+        path = environ.get("PATH_INFO", "")
 
-            # /health is authenticated anonymously
-            if path == "/health":
-                start_response("200 OK", [("Content-type", "text/plain; charset=utf-8")])
-                return [b"OK"]
+        # /health is authenticated anonymously
+        if path == "/health":
+            start_response("200 OK", [("Content-type", "text/plain; charset=utf-8")])
+            return [b"OK"]
 
-            if not _check_auth(environ, config.auth):
-                headers = [("Content-type", "text/plain; charset=utf-8")]
-                if config.auth.get_type() == "basic":
-                    headers += [("WWW-Authenticate", 'Basic realm="Prometheus CrowdSec Exporter"')]
-                start_response("401 Unauthorized", headers)
-                return [b"Unauthorized"]
+        if not _check_auth(environ, self._config.auth):
+            headers = [("Content-type", "text/plain; charset=utf-8")]
+            if self._config.auth.get_type() == "basic":
+                headers += [("WWW-Authenticate", 'Basic realm="Prometheus CrowdSec Exporter"')]
+            start_response("401 Unauthorized", headers)
+            return [b"Unauthorized"]
 
-            if path == "/metrics":
-                return prometheus_wsgi_app(environ, start_response)
+        if path == "/metrics":
+            return self.prometheus_wsgi_app(environ, start_response)
 
-            # Fallback for unmapped endpoints
-            start_response("404 Not Found", [("Content-type", "text/plain; charset=utf-8")])
-            return [b"Not Found"]
+        # Fallback for unmapped endpoints
+        start_response("404 Not Found", [("Content-type", "text/plain; charset=utf-8")])
+        return [b"Not Found"]
 
-        class ThreadingWSGIServer(ThreadingMixIn, WSGIServer):
-            # copied from prometheus_client/exposition.py#L155 and #L228
-            daemon_threads = True
+    def start(self):
+        """Fires off a daemon thread to run the http server."""
+        if self.is_running():
+            raise RuntimeError("Metrics server is already running.")
 
-        self.wsgi_server = make_server(
-            config.bind_host, config.bind_port,
-            _wsgi_execute_app,
-            server_class=ThreadingWSGIServer, handler_class=_RequestHandler
-            )
-        if config.tls is not None:
-            context = _new_tls_context(config.tls)
-            self.wsgi_server.socket = context.wrap_socket(self.wsgi_server.socket, server_side=True)
-        self.thread = threading.Thread(target=self.wsgi_server.serve_forever)
-        self.thread.daemon = True
-        self.thread.start()
+        self._wsgi_server = make_server(
+            self._config.bind_host, self._config.bind_port,
+            self._wsgi_execute_app,
+            server_class=_ThreadingWSGIServer, handler_class=_RequestHandler
+        )
+        if self._config.tls is not None:
+            context = _new_tls_context(self._config.tls)
+            self._wsgi_server.socket = context.wrap_socket(self._wsgi_server.socket, server_side=True)
 
-        log.info("started", port = config.bind_port, host = config.bind_host)
+        self._thread = threading.Thread(target=self._wsgi_server.serve_forever)
+        self._thread.daemon = True
+        self._thread.start()
 
-    def run_forever(self):
-        """Registers SIGINT and SIGTERM handlers and awaits such a signal, while serving in a separate thread"""
-        stop_event = threading.Event()
-
-        def handle_stop_signal(signum: int, _: object) -> None:
-            signal_name = signal.Signals(signum).name
-            log.info("interrupted", signal = signal_name)
-            stop_event.set()
-
-        signal.signal(signal.SIGTERM, handle_stop_signal)
-        signal.signal(signal.SIGINT, handle_stop_signal)
-
-        log.info("running_forever")
-
-        while not stop_event.is_set():
-            stop_event.wait(0.5)
-        # interruption logged in the handler already, dont need to repeat it here
+        log.info("started")
 
     def stop(self):
         """Stops the WSGI server and waits for the thread to finish"""
+        if self.is_running() is False:
+            raise RuntimeError("Metrics server is not running.")
+
         log.info("stopping")
-        self.wsgi_server.shutdown()
-        self.thread.join(timeout=2.0)
-        if self.thread.is_alive():
+        self._wsgi_server.shutdown()
+        self._wsgi_server.server_close()
+        self._thread.join(timeout=2.0)
+        if self._thread.is_alive():
             raise RuntimeError("Metrics server thread did not stop within the timeout period.")
+        self._thread = None
         log.info("stopped")
+
+    def is_running(self) -> bool:
+        return self._thread is not None and self._thread.is_alive()
