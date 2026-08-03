@@ -54,6 +54,7 @@ configMap:
 config:
   lapi_url: "http://crowdsec-lapi:8080"
   lapi_http_timeout_seconds: null # default 10
+  lapi_batch_size: null # default 1000
   bind_host: null # default "0.0.0.0"
   log_level: null # default "info"
   retain_counter_startup_increment: null # default false

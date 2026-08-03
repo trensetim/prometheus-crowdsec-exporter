@@ -115,6 +115,11 @@ spec:
                 configMapKeyRef:
                   name: {{ include "configmap-name" . }}
                   key: counter_max_age_seconds
+            - name: CROWDSEC_LAPI_BATCH_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "configmap-name" . }}
+                  key: lapi_batch_size
             - name: METRIC_SETS
               valueFrom:
                 configMapKeyRef:
