@@ -76,7 +76,7 @@ class _CrowdsecCredentials:
         self._machine_current_jwt = response.json()["token"]
         self._machine_current_jwt_expiry = datetime.fromisoformat(response.json()["expire"])
 
-        log.info("machine_jwt_refreshed", {"expiry": self._machine_current_jwt_expiry.isoformat()})
+        log.info("machine_jwt_refreshed", expiry = self._machine_current_jwt_expiry.isoformat())
         return self._machine_current_jwt
 
     def __str__(self):
