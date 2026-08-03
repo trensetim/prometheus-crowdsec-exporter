@@ -160,3 +160,12 @@ prometheus:
         for: 5m
         labels:
           severity: critical
+
+dashboard: # deploy a configmap with the grafana dashboard JSON.
+  enabled: true
+  configMap:
+    name: null
+    namespace: null # default to the same namespace as the chart
+    labels: {}
+    annotations: {}
+    fileName: "dashboard.json"

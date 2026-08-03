@@ -54,6 +54,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "auth-secret-name" -}}
 {{- .Values.auth.secret.name | default (printf "%s-auth" (include "name" .)) -}}
 {{- end }}
+{{- define "dashboard-configmap-name" -}}
+{{- .Values.dashboard.configMap.name | default (printf "%s-dashboard" (include "name" .)) -}}
+{{- end }}
 
 {{- define "certificate-commonName" -}}
 {{- default (include "service-name" .) .Values.tls.certManager.certificate.commonName -}}
