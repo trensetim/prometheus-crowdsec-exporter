@@ -1,31 +1,33 @@
 {
-	"version": "0.2.0",
-	"configurations": [
-		{
-			"name": "run",
-			"type": "debugpy",
-			"request": "launch",
-			"program": "main.py",
-			"console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/src/main/python",
-			"env": {
-                "CROWDSEC_LAPI_URL": "http://localhost:8080",
-                "CROWDSEC_BOUNCER_API_KEY": "aJj0k5/3BU9rT6e4Yhfi9WJ1G3Pq0zAPHuGtf2HykKA",
-                "CROWDSEC_MACHINE_ID": "test",
-                "CROWDSEC_MACHINE_PASSWORD": "GBUXxDyOOptyvMWqykkN5QjwB8HsxVhJcASiDzy7SB4WzTWuK94qrYYad2h2Uh6S",
-                "BIND_PORT": "8001",
-                "LOG_LEVEL": "INFO",
-                "APP_VERSION": "0.0.0",
-                "PYTHONUNBUFFERED": "1",
-                "TLS_CERT_FILE": "${workspaceFolder}/src/test/tls/cert.pem",
-                "TLS_KEY_FILE": "${workspaceFolder}/src/test/tls/key.pem",
-                "AUTH_USERNAME": "test",
-                "AUTH_PASSWORD": "test",
-                "METRIC_SETS": "all"
-            },
-            "envFile": "${workspaceFolder}/src/test/compose/lapi-key.env",
-            "preLaunchTask": "prepare-all",
-            "justMyCode": false
-		}
-	]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "run",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "main.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/main/python",
+      "env": {
+        "CROWDSEC_LAPI_URL": "http://localhost:8080",
+        "CROWDSEC_BOUNCER_API_KEY": "aJj0k5/3BU9rT6e4Yhfi9WJ1G3Pq0zAPHuGtf2HykKA",
+        "CROWDSEC_MACHINE_ID": "test",
+        "CROWDSEC_MACHINE_PASSWORD": "GBUXxDyOOptyvMWqykkN5QjwB8HsxVhJcASiDzy7SB4WzTWuK94qrYYad2h2Uh6S",
+        "CROWDSEC_LAPI_HTTP_TIMEOUT_SECONDS": "2",
+        "CROWDSEC_LAPI_BATCH_SIZE": "500",
+        "BIND_PORT": "8001",
+        "LOG_LEVEL": "INFO",
+        "APP_VERSION": "0.0.0",
+        "PYTHONUNBUFFERED": "1",
+        "TLS_CERT_FILE": "${workspaceFolder}/src/test/tls/cert.pem",
+        "TLS_KEY_FILE": "${workspaceFolder}/src/test/tls/key.pem",
+        "AUTH_USERNAME": "test",
+        "AUTH_PASSWORD": "test",
+        "METRIC_SETS": "all"
+      },
+      "envFile": "${workspaceFolder}/src/test/compose/lapi-key.env",
+      "preLaunchTask": "prepare-all",
+      "justMyCode": false
+    }
+  ]
 }

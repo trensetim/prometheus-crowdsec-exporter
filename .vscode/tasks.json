@@ -1,54 +1,54 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "start-compose",
-            "type": "shell",
-            "command": "docker compose up -d --build",
-            "options": {
-                "cwd": "${workspaceFolder}/src/test/compose"
-            },
-            "presentation": {
-                "revealProblems": "onProblem",
-                "reveal": "silent"
-            }
-        },
-        {
-            "label": "init-venv",
-            "type": "shell",
-            "command": "python3 -m venv --without-scm-ignore-files . ; source bin/activate ; pip install -r requirements.txt",
-            "options": {
-                "cwd": "${workspaceFolder}/src/main/python"
-            },
-            "presentation": {
-                "revealProblems": "onProblem",
-                "reveal": "silent"
-            }
-        },
-        {
-            "label": "prepare-all",
-            "dependsOn": [
-                "init-venv",
-                "start-compose",
-                "mkcerts"
-            ],
-            "dependsOrder": "parallel"
-        },
-        {
-            "label": "deploy helm chart",
-            "type": "shell",
-            "command": "helm upgrade --install prometheus-crowdsec-exporter ./src/main/helm --namespace ingress --create-namespace --values ./src/test/helm-values/applied.values.yaml",
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "mkcerts",
-            "type": "shell",
-            "command": "./src/test/tls/mkcerts.sh",
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        }
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "start-compose",
+      "type": "shell",
+      "command": "docker compose up -d --build",
+      "options": {
+        "cwd": "${workspaceFolder}/src/test/compose"
+      },
+      "presentation": {
+        "revealProblems": "onProblem",
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "init-venv",
+      "type": "shell",
+      "command": "python3 -m venv --without-scm-ignore-files . ; source bin/activate ; pip install -r requirements.txt",
+      "options": {
+        "cwd": "${workspaceFolder}/src/main/python"
+      },
+      "presentation": {
+        "revealProblems": "onProblem",
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "prepare-all",
+      "dependsOn": [
+        "init-venv",
+        "start-compose",
+        "mkcerts"
+      ],
+      "dependsOrder": "parallel"
+    },
+    {
+      "label": "deploy helm chart",
+      "type": "shell",
+      "command": "helm upgrade --install prometheus-crowdsec-exporter ./src/main/helm --namespace ingress --create-namespace --values ./src/test/helm-values/applied.values.yaml",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "mkcerts",
+      "type": "shell",
+      "command": "./src/test/tls/mkcerts.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    }
+  ]
 }
