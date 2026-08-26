@@ -59,7 +59,7 @@ All metrics are prefixed with `crowdsec_`. The following table shows the most-re
 | allowlists             | info                              | allowlist_name, console_managed, description, created_at, updated_at | Details about the individual allowlists                                                                   |
 | allowlist_items        | info                              | allowlist_name, value, description, created_at, expiration           | Details about the individual allowlist items                                                              |
 | alerts                 | info (only new since last scrape) | [see alert labelset](#full-alert-labelset)                           | Details about the individual alerts                                                                       |
-| decisions              | info (only new since last scrape) | [see decision labelset](#full-decision-labelset)                     | Details about the individual alerts                                                                       |
+| decisions              | info (only new since last scrape) | [see decision labelset](#full-decision-labelset)                     | Details about the individual decisions of all alerts where `origin=crowdsec`                              |
 
 ## Full Alert Labelset
 
@@ -170,6 +170,22 @@ So naturally, the first sample gets delayed by one scrape interval.
 The `METRICS_RETAIN_COUNTER_STARTUP_INCREMENTS` controls whether this will also happen for the very first scrape after a restart of the exporter.
 Setting it to `true` allows to load an initial increment, if the exporter gets installed significantly later than the CrowdSec instance itself.
 Leaving it to the `false` default will cover quick restarts of the exporter where missing a few alerts is less critical than double-counting all of them.
+
+## CAPI decisions
+
+The cardinality is even worse for the metric `crowdsec_decisions{origin="CAPI"}`, because a single alert (the "CAPI update"-alert) will produce many thousands of decisions.
+Tracking these individually is almost never interesting, but it severely explodes the cardinality of the metric (from a few houndred local decisions per day to many thousands upon every CAPI-poll cycle).
+Thus, this exporter explicitly filters out CAPI-originated decisions.
+
+If you want to retain them, set `METRICS_RETAIN_CAPI_DECISIONS=true`. You should only do this in development environments, eg. to get a feel of that data.
+The Prometheus instance of any reasonably-sized production environment will likely die from the amount of data you get from this.
+
+The exporter will still yield `crowdsec_decisions_total` and `crowdsec_decisions_grand_total` for the "CAPI update"-alerts.
+Yet, since the `Alert.source.ip` is reported by CrowdSec LAPI as `unknown` there, the cardinality collapses to 1 for these cases.
+
+Hint: you can also enable exporting these decisions and then have a `Values.prometheus.serviceMonitor.relabellings` config to drop them.
+Since this then still transmits these metrics across the network, it is usually more performant to filter them out in this exporter already.
+But the export-then-relabel-to-drop approach can be helpful when consuming the exporter from multiple prometheus instances with different levels of target granularity.
 
 ## TLS
 

@@ -68,7 +68,7 @@ spec:
       {{- end }}
       {{- end }}
 
-      {{- with .Values.prometheus.serviceMonitor.endpointsSpec }}
+      {{- with .Values.prometheus.serviceMonitor.endpointSpec }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
   {{- with .Values.prometheus.serviceMonitor.spec }}

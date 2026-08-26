@@ -1,3 +1,4 @@
+from enum import Enum
 import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -10,6 +11,19 @@ from models._parse_utils import (
     are_required_fields_present,
     parse_string_field,
 )
+
+class CommonDecisionOrigin(Enum):
+    """
+    The origin of a CrowdSec decision, as returned by the CrowdSec LAPI /v1/decisions endpoint.
+    The enum string values are lowercased.
+    """
+
+    CAPI = "capi"
+    """Decision was made by the Central API (eg. Community Blocklists)."""
+    CROWDSEC = "crowdsec"
+    """Decision was made by the local installation (tracked directly inside the Local-API/LAPI)."""
+    CSCLI = "cscli"
+    """Decision was placed manually by an operator via crowdsec CLI tool onto LAPI."""
 
 @dataclass(frozen=True)
 # pylint: disable=too-many-instance-attributes
@@ -58,6 +72,16 @@ class Decision:
 
     def parse_duration(self) -> timedelta:
         return Decision._parse_duration(self.duration)
+
+    def parse_origin(self) -> CommonDecisionOrigin | None:
+        """
+        Tries to interpret the 'origin' field of this decision as a CommonDecisionOrigin enum value.
+        If 'None' is returned, the origin is not a known value, yet still valid: use the field directly then.
+        """
+        try:
+            return CommonDecisionOrigin(self.origin.lower())
+        except ValueError:
+            return None
 
     @staticmethod
     def _parse_duration(duration: str) -> timedelta:

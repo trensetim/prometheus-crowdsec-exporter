@@ -197,6 +197,11 @@ class Config:
     """
     Maximum age for a non-incremented counter to be kept in memory. If this is exceeded, the counter will be pruned.
     """
+    metrics_retain_capi_decisions: bool
+    """
+    Whether to retain CAPI-originated decisions in the metrics. This is disabled by default, as it can explode the cardinality of the metrics and overload Prometheus.
+    Only use this for testing!
+    """
 
     metric_sets: set[MetricSet]
     """Which kinds of metrics to export."""
@@ -213,6 +218,7 @@ class Config:
         self.log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 
         self.metrics_retain_counter_startup_increments = os.getenv("METRICS_RETAIN_COUNTER_STARTUP_INCREMENTS", "false").lower() in ("true", "1", "yes")
+        self.metrics_retain_capi_decisions = os.getenv("METRICS_RETAIN_CAPI_DECISIONS", "false").lower() in ("true", "1", "yes")
         self.metrics_counter_max_count = int(os.getenv("METRICS_COUNTER_MAX_COUNT", "10000"))
 
         metrics_counter_max_age_seconds = int(os.getenv("METRICS_COUNTER_MAX_AGE_SECONDS", str(5*60))) # 5min

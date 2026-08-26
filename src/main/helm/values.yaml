@@ -144,7 +144,7 @@ prometheus:
     labels: {}
     relabellings: null
     spec: {} # inlined, additional YAML
-    endpointsSpec: {} # inlined, additional YAML
+    endpointSpec: {} # inlined, additional YAML
 
   prometheusRule:
     enabled: true

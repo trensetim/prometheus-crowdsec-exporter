@@ -9,7 +9,7 @@ import metrics
 from config import Config, MetricSet
 from logger import get_logger
 from poller import CrowdsecPoller
-from models import Alert, Allowlist
+from models import Alert, Allowlist, CommonDecisionOrigin
 
 log = get_logger(__name__)
 
@@ -35,6 +35,8 @@ class CrowdsecCollector(Collector):
     _metric_allowlists_total: int = 0
     _metric_allowlist_items_total: int = 0
 
+    _metrics_retain_capi_decisions: bool = False
+
     def __init__(self, config: Config) -> None:
         self._config_version = config.version
         self._poller = CrowdsecPoller(config)
@@ -42,6 +44,7 @@ class CrowdsecCollector(Collector):
         self._metric_decisions_total = TotalCounterCollection(config.metrics_counter_max_count, config.metrics_counter_max_age)
         self._metric_alerts_total = TotalCounterCollection(config.metrics_counter_max_count, config.metrics_counter_max_age)
         self._metric_events_total = TotalCounterCollection(config.metrics_counter_max_count, config.metrics_counter_max_age)
+        self._metrics_retain_capi_decisions = config.metrics_retain_capi_decisions
         log.info("collector_initialised")
 
         if not config.metrics_retain_counter_startup_increments:
@@ -161,6 +164,9 @@ class CrowdsecCollector(Collector):
         m = metrics.decisions()
         for alert in alerts:
             for decision in alert.decisions:
+                if decision.parse_origin() == CommonDecisionOrigin.CAPI and not self._metrics_retain_capi_decisions:
+                    # tracking all (many-thousands) individual CAPI-originated decisions explode the cardinality inside prometheus and will likely overload/kill it
+                    continue
                 m.add_metric(decision.metric_label_values(alert_id=alert.id, alert_uuid=alert.uuid), 1, alert.created_at.timestamp())
         return m
 
