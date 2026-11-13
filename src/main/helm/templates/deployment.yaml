@@ -115,6 +115,11 @@ spec:
                 configMapKeyRef:
                   name: {{ include "configmap-name" . }}
                   key: alert_dedup_window_size
+            - name: SCENARIO_REWRITES
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "configmap-name" . }}
+                  key: scenario_rewrites
             - name: METRICS_COUNTER_MAX_AGE_SECONDS
               valueFrom:
                 configMapKeyRef:

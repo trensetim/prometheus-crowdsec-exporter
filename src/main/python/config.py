@@ -6,6 +6,8 @@ from typing import Literal
 
 from inotify_simple import INotify, flags
 
+from scenario import ScenarioRewriter
+
 def _read_required_env(key: str) -> str:
     value = os.getenv(key)
     if not value or value == "":
@@ -211,6 +213,12 @@ class Config:
     few times the LAPI batch size) to avoid counting the same alert twice.
     """
 
+    scenario_rewriter: ScenarioRewriter | None
+    """
+    Ordered, sed-style regex substitutions applied to each alert's scenario during parsing,
+    used to collapse high-cardinality dynamic scenario names into a bounded set of labels.
+    """
+
     metric_sets: set[MetricSet]
     """Which kinds of metrics to export."""
 
@@ -230,6 +238,8 @@ class Config:
         self.metrics_counter_max_count = int(os.getenv("METRICS_COUNTER_MAX_COUNT", "10000"))
 
         self.alert_dedup_window_size = int(os.getenv("ALERT_DEDUP_WINDOW_SIZE", "50000"))
+
+        self.scenario_rewriter = ScenarioRewriter.parse(os.getenv("SCENARIO_REWRITES", ""))
 
         metrics_counter_max_age_seconds = int(os.getenv("METRICS_COUNTER_MAX_AGE_SECONDS", str(5*60))) # 5min
         self.metrics_counter_max_age = timedelta(seconds=metrics_counter_max_age_seconds)

@@ -10,6 +10,7 @@ from models._parse_utils import (
     parse_string_field,
 )
 from models.decision import Decision
+from scenario import ScenarioRewriter
 
 # pylint: disable=too-many-instance-attributes
 @dataclass(frozen = True)
@@ -133,7 +134,7 @@ class Alert:
     kind: str
 
     @classmethod
-    def parse(cls: Type["Alert"], raw: dict[str, Any]) -> "Alert | None":
+    def parse(cls: Type["Alert"], raw: dict[str, Any], scenario_rewriter: ScenarioRewriter | None = None) -> "Alert | None":
         if not isinstance(raw, dict):
             raise ValueError("Alert is not a dict")
 
@@ -148,12 +149,16 @@ class Alert:
             if (item := Decision.parse(rd, created_at)) is not None
         )
 
+        scenario = parse_string_field(raw, "scenario")
+        if scenario_rewriter is not None:
+            scenario = scenario_rewriter.apply(scenario)
+
         return cls(
             id = parse_int_field(raw, "id"),
             uuid = parse_string_field(raw, "uuid", ""),
             machine_id = parse_string_field(raw, "machine_id", ""),
             created_at = created_at,
-            scenario = parse_string_field(raw, "scenario"),
+            scenario = scenario,
             scenario_hash = parse_string_field(raw, "scenario_hash", ""),
             scenario_version = parse_string_field(raw, "scenario_version", ""),
             message = parse_string_field(raw, "message", ""),

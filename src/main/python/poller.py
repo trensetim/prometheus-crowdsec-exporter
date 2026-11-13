@@ -1,6 +1,6 @@
 from math import ceil
 import sys
-from typing import Sequence
+from typing import Callable, Sequence
 
 from collections import OrderedDict
 from datetime import datetime, timezone
@@ -103,9 +103,14 @@ class AlertDeduplicator:
     _capacity: int
     _seen_alerts: "OrderedDict[AlertIdentityKey, None]"
     _uncommitted: "OrderedDict[AlertIdentityKey, None]"
+    _parse_func: Callable[[dict], Alert | None]
 
-    def __init__(self, capacity: int = 50_000) -> None:
+    def __init__(self,
+            capacity: int = 50_000,
+            parse_func: Callable[[dict], Alert | None] = lambda raw_alert: Alert.parse(raw_alert, None)
+        ) -> None:
         self._capacity = capacity
+        self._parse_func = parse_func
         self._seen_alerts = OrderedDict()
         self._uncommitted = OrderedDict()
 
@@ -113,11 +118,11 @@ class AlertDeduplicator:
         key = AlertIdentityKey.parse(raw_alert)
         if key is None:
             # no identity -> cannot deduplicate, always emit (and never store)
-            return Alert.parse(raw_alert)
+            return self._parse_func(raw_alert)
         if key in self._uncommitted:
             self._uncommitted.move_to_end(key) # keep actively re-fetched keys warm (LRU)
             return None
-        alert = Alert.parse(raw_alert)
+        alert = self._parse_func(raw_alert)
         if alert is not None:
             self._uncommitted[key] = None
             if len(self._uncommitted) > self._capacity:
@@ -149,7 +154,11 @@ class CrowdsecPoller:
                 "User-Agent": f"prometheus-crowdsec-exporter/{config.version}",
             }
         )
-        self._deduplicator = AlertDeduplicator(config.alert_dedup_window_size)
+
+        self._deduplicator = AlertDeduplicator(
+            capacity=config.alert_dedup_window_size,
+            parse_func=lambda raw_alert: Alert.parse(raw_alert, config.scenario_rewriter)
+        )
         self._batch_size = config.batch_size
 
         log.info("poller_initialised", http=str(self._http_client), credentials=str(self._credentials))

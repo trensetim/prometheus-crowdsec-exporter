@@ -61,6 +61,9 @@ config:
   counter_max_count: null # default 10000
   counter_max_age_seconds: null # default 300
   alert_dedup_window_size: null # default 50000
+  # Ordered sed-style scenario rewrite rules ";regex;replace;flags" (any delimiter as 1st char).
+  # Either a list of rule strings, or a single newline-separated string. Default: no rewriting.
+  scenario_rewrites: []
   metric_sets: default # either a list of values, or a comma-separated string
 
   # required

@@ -138,6 +138,7 @@ You can restore them by `prometheus.metricRelabelings: []`.
 | `METRICS_COUNTER_MAX_COUNT`                 | `10000`      | See [high cardinality](#high-cardinality) below                      |
 | `METRICS_COUNTER_MAX_AGE_SECONDS`           | `300` (5min) | See [high cardinality](#high-cardinality) below                      |
 | `ALERT_DEDUP_WINDOW_SIZE`                   | `50000`      | LRU cache size. Should be multiple times `CROWDSEC_LAPI_BATCH_SIZE`  |
+| `SCENARIO_REWRITES`                         | unset        | Newline-separated sed-style scenario rewrite rules. See [scenario rewrites](#scenario-rewrites). |
 | `METRIC_SETS`                               | `default`    | Comma-separated list. See [metric sets](#metric-sets).               |
 | `TLS_CERT_FILE`                             | unset        | See [tls](#tls). Must be a path itself.                              |
 | `TLS_KEY_FILE`                              | unset        | See [tls](#tls). Must be a path itself.                              |
@@ -190,6 +191,40 @@ Yet, since the `Alert.source.ip` is reported by CrowdSec LAPI as `unknown` there
 Hint: you can also enable exporting these decisions and then have a `Values.prometheus.serviceMonitor.metricRelabelings` config to drop them (by default, the Helm chart drops `crowdsec_decisions_total` and `crowdsec_events_total` via `metricRelabelings` as the bundled Grafana dashboard only queries `crowdsec_alerts_total`).
 Since this then still transmits these metrics across the network, it is usually more performant to filter them out in this exporter already.
 But the export-then-relabel-to-drop approach can be helpful when consuming the exporter from multiple prometheus instances with different levels of target granularity.
+
+## Scenario rewrites
+
+Some CrowdSec scenarios embed dynamic, high-cardinality data directly in the scenario name, for example
+`anomaly score out-of-band: lfi: 5, anomaly: 5,` (AppSec out-of-band anomaly scores) or
+`update : +14999/-0 IPs` (CAPI community-blocklist syncs). Because `scenario` is a label on the
+never-pruned `*_grand_total` counters, every new permutation leaks a permanent time series.
+
+`SCENARIO_REWRITES` lets you normalize these during parsing. It is a newline-separated list of
+sed-style substitution rules applied, in order, to every alert's `scenario`:
+
+```
+<delim>pattern<delim>replacement<delim>flags
+```
+
+- `<delim>` is the first character of the rule and may be any character that does not occur unescaped
+  inside the pattern or replacement (escape a literal delimiter inside a field with a backslash).
+- `pattern` is a Python regular expression; `replacement` supports backreferences (`\1`).
+- `flags` (optional):
+  - `g` replace all matches (default: only the first)
+  - `i` case-insensitive
+  - `m` multi-line
+  - `s` dot matches newlines.
+
+Example (collapsing the two dynamic scenarios above):
+
+```
+;^(anomaly score out-of-band):.*;\1;
+;^update : .*;capi/community-blocklist-update;
+```
+
+Rewriting applies to the `scenario` label of the alert-level metrics (including the `*_total` and
+`*_grand_total` counters); the per-decision `crowdsec_decisions` labels are not rewritten.
+A malformed rule fails fast at startup.
 
 ## TLS
 
