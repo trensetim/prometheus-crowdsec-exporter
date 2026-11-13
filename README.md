@@ -119,6 +119,9 @@ Additionally, one can restrict the returned metrics even further, by supplying t
 | `allowlist_instances` | The current info gauges for allowlists and their items.                                                   |
 | `allowlist_details`   | More details about the allowlists and items, like eg. `allowlist_created` or `allowlist_item_expiration`. |
 
+As a third measure, the helm chart drops metrics that are unused by the [grafana dashboard](./src/main/grafana/dashboard.json), by default.
+You can restore them by `prometheus.metricRelabelings: []`.
+
 # Configuration (Environment variables)
 
 | Variable                                    | Default      | Description                                                          |
@@ -184,7 +187,7 @@ The Prometheus instance of any reasonably-sized production environment will like
 The exporter will still yield `crowdsec_decisions_total` and `crowdsec_decisions_grand_total` for the "CAPI update"-alerts.
 Yet, since the `Alert.source.ip` is reported by CrowdSec LAPI as `unknown` there, the cardinality collapses to 1 for these cases.
 
-Hint: you can also enable exporting these decisions and then have a `Values.prometheus.serviceMonitor.relabellings` config to drop them.
+Hint: you can also enable exporting these decisions and then have a `Values.prometheus.serviceMonitor.metricRelabelings` config to drop them (by default, the Helm chart drops `crowdsec_decisions_total` and `crowdsec_events_total` via `metricRelabelings` as the bundled Grafana dashboard only queries `crowdsec_alerts_total`).
 Since this then still transmits these metrics across the network, it is usually more performant to filter them out in this exporter already.
 But the export-then-relabel-to-drop approach can be helpful when consuming the exporter from multiple prometheus instances with different levels of target granularity.
 

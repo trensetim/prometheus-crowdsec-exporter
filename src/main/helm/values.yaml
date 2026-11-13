@@ -144,6 +144,11 @@ prometheus:
     scrapeTimeout: null # default 10s
     labels: {}
     relabellings: null
+    metricRelabelings:
+      - sourceLabels:
+          - __name__
+        regex: crowdsec_(decisions|events)_total
+        action: drop
     spec: {} # inlined, additional YAML
     endpointSpec: {} # inlined, additional YAML
 
