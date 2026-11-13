@@ -2,13 +2,14 @@ from math import ceil
 import sys
 from typing import Sequence
 
+from collections import OrderedDict
 from datetime import datetime, timezone
 import requests
 import time
 
 from config import Config
 from logger import get_logger
-from models import Alert, Allowlist
+from models import Alert, AlertIdentityKey, Allowlist
 
 log = get_logger(__name__)
 
@@ -82,12 +83,60 @@ class _CrowdsecCredentials:
     def __str__(self):
         return f"_CrowdsecCredentials(machine_id={self._machine_id}, machine_password=***, machine_current_jwt=***, machine_current_jwt_expiry={self._machine_current_jwt_expiry.isoformat()})"
 
+class AlertDeduplicator:
+    """
+    Suppresses duplicate alerts seen across polls and pagination batches.
+
+    Keeps a bounded, insertion-ordered set of recently-seen alert identities (an LRU):
+    membership is O(1) and, once `capacity` is exceeded, the oldest identity is evicted.
+    This is capacity-based rather than time-based, so deduplication does not depend on
+    wall-clock timestamps.
+
+    `capacity` must comfortably exceed the number of alerts re-fetched across the poll(s)
+    before the `since`-watermark advances past them (ie. at least a few times the LAPI
+    batch size); otherwise an identity could be evicted while still being re-fetched and
+    thus be counted twice.
+
+    `process` stages changes into an uncommitted working copy. Call `commit` after a poll
+    fully succeeds, or `rollback` to discard a partial poll's state (eg. after an error).
+    """
+    _capacity: int
+    _seen_alerts: "OrderedDict[AlertIdentityKey, None]"
+    _uncommitted: "OrderedDict[AlertIdentityKey, None]"
+
+    def __init__(self, capacity: int = 50_000) -> None:
+        self._capacity = capacity
+        self._seen_alerts = OrderedDict()
+        self._uncommitted = OrderedDict()
+
+    def process(self, raw_alert: dict) -> Alert | None:
+        key = AlertIdentityKey.parse(raw_alert)
+        if key is None:
+            # no identity -> cannot deduplicate, always emit (and never store)
+            return Alert.parse(raw_alert)
+        if key in self._uncommitted:
+            self._uncommitted.move_to_end(key) # keep actively re-fetched keys warm (LRU)
+            return None
+        alert = Alert.parse(raw_alert)
+        if alert is not None:
+            self._uncommitted[key] = None
+            if len(self._uncommitted) > self._capacity:
+                self._uncommitted.popitem(last=False) # evict the oldest identity
+        return alert
+
+    def commit(self) -> None:
+        self._seen_alerts = OrderedDict(self._uncommitted)
+
+    def rollback(self) -> None:
+        self._uncommitted = OrderedDict(self._seen_alerts)
+
 class CrowdsecPoller:
     """Abstracts away http api communication"""
 
     _http_client: _RawHttpClient
     _credentials: _CrowdsecCredentials
     _last_alert_created_at: datetime | None = None
+    _deduplicator: AlertDeduplicator
     _batch_size: int
 
     def __init__(self, config: Config) -> None:
@@ -100,6 +149,7 @@ class CrowdsecPoller:
                 "User-Agent": f"prometheus-crowdsec-exporter/{config.version}",
             }
         )
+        self._deduplicator = AlertDeduplicator(config.alert_dedup_window_size)
         self._batch_size = config.batch_size
 
         log.info("poller_initialised", http=str(self._http_client), credentials=str(self._credentials))
@@ -130,9 +180,10 @@ class CrowdsecPoller:
                 params += f"&since={ago}"
             return params
 
-        def since_to_ago(since: datetime, now: datetime = datetime.now(tz=timezone.utc)) -> str:
+        def since_to_ago(since: datetime, now: datetime | None = None) -> str:
+            now = now or datetime.now(tz=timezone.utc)
             diff = now - since
-            seconds = ceil(diff.total_seconds())
+            seconds = max(1, ceil(diff.total_seconds()))
             return str(seconds) + "s"
 
         def last_created_at(alerts: list[Alert]) -> datetime | None:
@@ -143,16 +194,23 @@ class CrowdsecPoller:
         ago: str | None = None
         alerts: list[Alert] = []
         if self._last_alert_created_at is not None:
-            ago = since_to_ago(self._last_alert_created_at)
+            ago = since_to_ago(self._last_alert_created_at, None)
 
+        self._deduplicator.rollback()
         safe_max_batch_count = 100 # firing off more http requests per poll seems broken
         for batch_no in range(safe_max_batch_count + 1):
             raw_batch = self._fetch("/v1/alerts" + query_params(ago, self._batch_size))
-            if raw_batch is None or len(raw_batch) == 0:
-                break
-            alerts += [Alert.parse(i) for i in (raw_batch or [])]
+            reached_end = len(raw_batch) < self._batch_size
+
+            raw_batch = [s for a in (raw_batch or []) if (s:=self._deduplicator.process(a)) is not None]
+            alerts += raw_batch
+
+            reached_end = reached_end or len(raw_batch) == 0 # either full page of duplicates (next poll will progress further), or already on the last page
+            if reached_end:
+                break # stop early: next batch will not yield any more results
+
             since = last_created_at(alerts)
-            ago = since_to_ago(since)
+            ago = since_to_ago(since, None)
 
             if batch_no > 5:
                 # ease off the load during huge polls (eg. startup)
@@ -170,6 +228,7 @@ class CrowdsecPoller:
         elif next_last_created_at is not None and self._last_alert_created_at is not None:
             self._last_alert_created_at = max(self._last_alert_created_at, next_last_created_at)
 
+        self._deduplicator.commit()
         return alerts
 
     def _fetch(self, path: str) -> any:

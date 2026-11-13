@@ -134,6 +134,7 @@ Additionally, one can restrict the returned metrics even further, by supplying t
 | `METRICS_RETAIN_COUNTER_STARTUP_INCREMENTS` | `false`      | (or `true`) See [high cardinality](#high-cardinality) below          |
 | `METRICS_COUNTER_MAX_COUNT`                 | `10000`      | See [high cardinality](#high-cardinality) below                      |
 | `METRICS_COUNTER_MAX_AGE_SECONDS`           | `300` (5min) | See [high cardinality](#high-cardinality) below                      |
+| `ALERT_DEDUP_WINDOW_SIZE`                   | `50000`      | LRU cache size. Should be multiple times `CROWDSEC_LAPI_BATCH_SIZE`  |
 | `METRIC_SETS`                               | `default`    | Comma-separated list. See [metric sets](#metric-sets).               |
 | `TLS_CERT_FILE`                             | unset        | See [tls](#tls). Must be a path itself.                              |
 | `TLS_KEY_FILE`                              | unset        | See [tls](#tls). Must be a path itself.                              |

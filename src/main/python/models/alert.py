@@ -67,6 +67,46 @@ class AlertEvent:
             meta = _parse_meta(raw.get("meta"))
         )
 
+@dataclass(frozen=True)
+class AlertIdentityKey:
+    """
+    Stable identity of an alert, used to deduplicate alerts across polls and pagination batches.
+
+    Combines the LAPI-local incrementing `id` with the globally-unique `uuid`:
+    CAPI update alerts carry an empty `uuid`, so `id` keeps them distinct, while
+    normal alerts additionally carry a `uuid`. Using both fields (instead of only
+    one) keeps the key type-stable and degrades safely if either identifier is
+    unreliable (eg. a mock/buggy LAPI emitting duplicate uuids).
+
+    An alert without any identifier has no identity: use the `of`/`parse` factories,
+    which return `None` for that case, rather than constructing an (invalid) empty key.
+    """
+    id: int
+    uuid: str
+
+    def __init__(self, id: int, uuid: str) -> None: # pylint: disable=redefined-builtin
+        # frozen dataclass: fields must be assigned via object.__setattr__.
+        # Forbid the empty, un-deduplicatable instance so invalid keys cannot exist.
+        if id == 0 and uuid == "":
+            raise ValueError("AlertIdentityKey requires at least one identifier (id or uuid); use AlertIdentityKey.of() to get None instead")
+        object.__setattr__(self, "id", id)
+        object.__setattr__(self, "uuid", uuid)
+
+    @staticmethod
+    def of(alert_id: int, uuid: str) -> "AlertIdentityKey | None":
+        """Build a key, or None when neither identifier is present (ie. the alert cannot be deduplicated)."""
+        if alert_id == 0 and uuid == "":
+            return None
+        return AlertIdentityKey(alert_id, uuid)
+
+    @staticmethod
+    def parse(raw: dict[str, Any]) -> "AlertIdentityKey | None":
+        """Derive the identity key straight from a raw alert dict, without parsing the whole alert."""
+        return AlertIdentityKey.of(
+            parse_int_field(raw, "id"),
+            parse_string_field(raw, "uuid", ""),
+        )
+
 # pylint: disable=too-many-instance-attributes
 @dataclass(frozen=True)
 class Alert:
@@ -132,13 +172,16 @@ class Alert:
             kind = parse_string_field(raw, "kind"),
         )
 
+    def identity_key(self) -> AlertIdentityKey | None:
+        return AlertIdentityKey.of(self.id, self.uuid)
+
     def __eq__(self, value):
         if not isinstance(value, Alert):
             return False
-        return self.uuid == value.uuid
+        return self.identity_key() == value.identity_key()
 
     def __hash__(self):
-        return hash(self.uuid)
+        return hash(self.identity_key())
 
     @staticmethod
     def metric_labels() -> list[str]:

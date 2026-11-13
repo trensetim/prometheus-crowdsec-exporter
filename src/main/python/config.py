@@ -203,6 +203,14 @@ class Config:
     Only use this for testing!
     """
 
+    alert_dedup_window_size: int
+    """
+    Maximum number of recently-seen alert identities kept in memory to deduplicate alerts
+    across polls. Once exceeded, the oldest identity is evicted. Must comfortably exceed the
+    number of alerts re-fetched before the poll watermark advances past them (ie. at least a
+    few times the LAPI batch size) to avoid counting the same alert twice.
+    """
+
     metric_sets: set[MetricSet]
     """Which kinds of metrics to export."""
 
@@ -220,6 +228,8 @@ class Config:
         self.metrics_retain_counter_startup_increments = os.getenv("METRICS_RETAIN_COUNTER_STARTUP_INCREMENTS", "false").lower() in ("true", "1", "yes")
         self.metrics_retain_capi_decisions = os.getenv("METRICS_RETAIN_CAPI_DECISIONS", "false").lower() in ("true", "1", "yes")
         self.metrics_counter_max_count = int(os.getenv("METRICS_COUNTER_MAX_COUNT", "10000"))
+
+        self.alert_dedup_window_size = int(os.getenv("ALERT_DEDUP_WINDOW_SIZE", "50000"))
 
         metrics_counter_max_age_seconds = int(os.getenv("METRICS_COUNTER_MAX_AGE_SECONDS", str(5*60))) # 5min
         self.metrics_counter_max_age = timedelta(seconds=metrics_counter_max_age_seconds)
