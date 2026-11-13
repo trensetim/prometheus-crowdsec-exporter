@@ -17,8 +17,20 @@ before_script:
       mkdir -p build/
 
 stages:
+  - test
   - build_dev
   - release
+
+unit_tests:
+    stage: test
+    image: python:3.14-slim
+    tags:
+      - docker
+    services: []
+    before_script: [] # override the global docker-login; not needed for unit tests
+    script:
+      - pip install --no-cache-dir -r src/main/python/requirements-dev.txt
+      - pytest
 
 build_dev_docker:
     tags:

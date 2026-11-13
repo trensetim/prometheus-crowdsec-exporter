@@ -13,8 +13,8 @@ Configuration is in `pytest.ini` at the repository root, which puts `src/main/py
 so tests can `import scenario`, `import models`, etc.
 
 ```bash
-pip install pytest   # once, if not already installed
-pytest               # from the repository root
+pip install -r src/main/python/requirements-dev.txt   # once, installs pytest + runtime deps
+pytest                                                 # from the repository root
 ```
 
 
