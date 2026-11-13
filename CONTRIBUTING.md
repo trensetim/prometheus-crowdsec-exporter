@@ -2,8 +2,21 @@
 
 - `/src/build` contains all build scripts and the production Dockerfile
 - `/src/test/compose` contains everything one needs for local development and testing
+- `/src/test/python` contains the Python unit tests (and the mock LAPI used by the dev stack)
 - `/src/main/python` contains the actual application code
 - `/src/main/helm` contains the production helm chart
+
+# Unit tests
+
+Unit tests live under `src/test/python` (files named `test_*.py`) and run with [pytest](https://pytest.org).
+Configuration is in `pytest.ini` at the repository root, which puts `src/main/python` on the import path
+so tests can `import scenario`, `import models`, etc.
+
+```bash
+pip install pytest   # once, if not already installed
+pytest               # from the repository root
+```
+
 
 # Local development
 The `src/test/compose` directory contains a complete local stack with a mock CrowdSec LAPI, Prometheus, and Grafana.

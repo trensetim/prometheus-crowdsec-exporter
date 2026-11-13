@@ -4,5 +4,12 @@
     "--disable=C0114", // Missing module docstring
     "--disable=C0115", // Missing class docstring
     "--disable=C0116" // Missing function docstring
+  ],
+  "python.analysis.extraPaths": [
+    "src/main/python"
+  ],
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": [
+    "src/test/python"
   ]
 }
