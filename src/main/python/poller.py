@@ -207,16 +207,39 @@ class CrowdsecPoller:
 
         self._deduplicator.rollback()
         safe_max_batch_count = 100 # firing off more http requests per poll seems broken
+        batch_size = self._batch_size
         for batch_no in range(safe_max_batch_count + 1):
-            raw_batch = self._fetch("/v1/alerts" + query_params(ago, self._batch_size))
-            reached_end = len(raw_batch) < self._batch_size
+            raw_batch = self._fetch("/v1/alerts" + query_params(ago, batch_size))
+            reached_end = len(raw_batch) < batch_size
 
             raw_batch = [s for a in (raw_batch or []) if (s:=self._deduplicator.process(a)) is not None]
             alerts += raw_batch
 
-            reached_end = reached_end or len(raw_batch) == 0 # either full page of duplicates (next poll will progress further), or already on the last page
             if reached_end:
                 break # stop early: next batch will not yield any more results
+
+            if len(raw_batch) == 0:
+                # Received a full page of duplicates: widen window to try progressing.
+                # This may lead to being OOM-Killed: acceptable.
+                #   - We assume that the server generates the response in a streaming fashion.
+                #     A request for "infinite data" should not overwhelm the server, if it accepts it.
+                #     So we assume we are safe to request such.
+                #   - We cannot easily predict the actual memory usage of the response: any single alert may have
+                #     unpredictably many decisions inside it. (eg. many thousands for CAPI-poll-alerts).
+                #     Thus, we do not even try to limit the batch size. If we dont have enough memory to hold it,
+                #     we better die on OOM to highlight that failure condition.
+                #   - That this even happens is ultra-rare: it requires receiving a a big multiple of full pages of duplicates
+                #     (ie. many tens of thousands with realisitic config).
+
+                # Possible optimization: Instead of doing `parseJson(httpbody)` for the entire response, we
+                #    can request a streaming response and sequentially parse each element of the contained JSON-Array and
+                #    return a generator of parsed, raw JSON-Objects (containing the alerts).
+                #    This would sidestep the entire pagination problem, yet requires using a streaming JSON parser.
+                #    Maybe https://pypi.org/project/json-stream/ can do.
+                #    Implementing this idea is postponed until proven necessary.
+
+                batch_size *= 2
+                continue
 
             since = last_created_at(alerts)
             ago = since_to_ago(since, None)

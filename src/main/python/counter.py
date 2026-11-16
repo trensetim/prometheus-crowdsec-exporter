@@ -1,3 +1,4 @@
+import sys
 from time import time
 from datetime import datetime, timedelta, timezone
 
@@ -9,13 +10,14 @@ class TotalCounter:
     _count: int = 0
     _reset: bool
 
-    _last_increment_timestamp: float
+    _last_increment_timestamp: float | None
     """When this counter was incremented last, as UNIX seconds."""
 
     def __init__(self, label_values: list[str], reset_at_start: bool) -> None:
         self._label_values = label_values
         self._hash = TotalCounter.hash_impl(label_values)
         self._reset = reset_at_start
+        self._last_increment_timestamp = None
 
     def __hash__(self) -> int:
         return self._hash
@@ -29,7 +31,7 @@ class TotalCounter:
         self._count += amount
         self._last_increment_timestamp = time()
 
-    def last_increment_timestamp(self) -> float:
+    def last_increment_timestamp(self) -> float | None:
         return self._last_increment_timestamp
 
     def _release_reset(self) -> None:
@@ -75,13 +77,14 @@ class TotalCounterCollection:
     """
 
     def __init__(self, max_count: int, max_age: timedelta) -> None:
+        if max_count <= 0:
+            raise ValueError("max_count must be positive")
+        if max_age <= timedelta(0):
+            raise ValueError("max_age must be positive")
         self._counters = {}
         self._max_count = max_count
         self._max_age = max_age
         self._grand_totals = {}
-
-    def grand_total(self, label_values: list[str]) -> int:
-        return self._grand_totals.get(tuple(label_values), 0)
 
     def increment(self, label_values: list[str], grand_total_label_values: list[str], amount: int = 1, reset_at_start: bool = False) -> None:
         counter = self._get_or_create(label_values, reset_at_start)
@@ -124,9 +127,10 @@ class TotalCounterCollection:
         This is useful to avoid memory leaks for labelsets that are no longer used.
         """
         prune_age_threshold = (datetime.now(tz=timezone.utc) - self._max_age).timestamp()
-        self._counters = {k: v for k, v in self._counters.items() if v.last_increment_timestamp() > prune_age_threshold}
+        self._counters = {k: v for k, v in self._counters.items() if v.last_increment_timestamp() is None or v.last_increment_timestamp() > prune_age_threshold}
 
+        # also limit the total memory volume
         while len(self._counters) > self._max_count:
             # remove the oldest counter
-            oldest_key = min(self._counters.keys(), key=lambda k: self._counters[k].last_increment_timestamp())
+            oldest_key = min(self._counters.keys(), key=lambda k: self._counters[k].last_increment_timestamp() or sys.float_info.max)
             del self._counters[oldest_key]
